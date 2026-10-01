@@ -16,12 +16,16 @@
 #projectsView .project-timeline-panel{min-height:0;overflow:hidden}
 #projectsView .project-progress-panel{min-height:0}
 #projectsView .project-progress-panel .table-wrap{max-height:420px}
+#projectsView .project-progress-panel table{min-width:0;table-layout:fixed}
+#projectsView .project-progress-panel th:nth-child(1),#projectsView .project-progress-panel td:nth-child(1){width:29%}
+#projectsView .project-progress-panel th:nth-child(2),#projectsView .project-progress-panel td:nth-child(2){width:21%}
+#projectsView .project-progress-panel th:nth-child(3),#projectsView .project-progress-panel td:nth-child(3){width:16%}
+#projectsView .project-progress-panel th:nth-child(4),#projectsView .project-progress-panel td:nth-child(4){width:20%}
+#projectsView .project-progress-panel th:nth-child(5),#projectsView .project-progress-panel td:nth-child(5){width:14%}
 #projectsView .project-progress-rows td{vertical-align:middle}
-#projectsView .project-progress-rows td:first-child{min-width:260px;max-width:560px;white-space:normal}
-#projectsView .project-progress-rows td:nth-child(2){min-width:210px}
-#projectsView .project-progress-rows td:nth-child(3){min-width:145px}
-#projectsView .project-progress-rows td:nth-child(4){min-width:180px}
-#projectsView .project-progress-rows td:nth-child(5){min-width:140px}
+#projectsView .project-progress-rows td:first-child{min-width:0;max-width:none;white-space:normal}
+#projectsView .project-progress-rows td:nth-child(n){min-width:0;white-space:normal}
+#projectsView .project-progress-rows .progress{min-width:0;gap:5px}
 #projectsView .project-progress-rows .fill{background:#328cf0!important}
 #projectsView .project-progress-rows .pill.bad{background:#fff0dc;color:#ad6209}
 #projectsView .project-progress-rows .pill.good{background:#e8f2ff;color:#1f5fae}
@@ -43,7 +47,7 @@
 #projectsView .project-legend span{display:inline-flex;align-items:center;gap:7px}
 #projectsView .project-legend i{width:10px;height:10px;border-radius:3px;background:#328cf0}
 #projectsView .project-legend i.orange{background:#f49a32}
-@media(max-width:760px){#projectsView .project-timeline-panel,#projectsView .project-progress-panel{padding:14px}#projectsView .project-progress-rows td:first-child{min-width:210px}#project-timeline{max-height:480px}#project-timeline svg{min-width:1050px}}
+@media(max-width:760px){#projectsView .project-timeline-panel,#projectsView .project-progress-panel{padding:14px}#projectsView .project-progress-panel table{min-width:680px}#project-timeline{max-height:480px}#project-timeline svg{min-width:1050px}}
 </style>
 </head>
 <body>
