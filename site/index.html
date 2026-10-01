@@ -123,6 +123,9 @@
  .chart-grid.three>.panel:last-child{grid-column:1/-1}
  .chart-grid.three>.panel{min-height:300px}
  .chart-grid.three .viz,.chart-grid.three .donut-layout{min-height:220px}
+ #kpiView .chart-grid.kpi-lower{grid-template-columns:minmax(0,1fr)}
+ #kpiView .chart-grid.kpi-lower>.panel:nth-child(2),#kpiView .chart-grid.kpi-lower>.panel:last-child{grid-column:1}
+ #kpiView .chart-grid.kpi-lower .kpi-left-stack>.panel{min-height:300px}
  .chart-grid.project-lower>.panel,.chart-grid.task-lower>.panel{min-height:340px}
 }
 @media(min-width:1401px){
