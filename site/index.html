@@ -117,6 +117,19 @@
 .viz .timeline-month,.viz .timeline-name,.viz .timeline-status,#project-timeline .timeline-month,#project-timeline .timeline-name,#project-timeline .timeline-status{font-size:13px}
 .viz .timeline-today-label,#project-timeline .timeline-today-label{font-size:13px}
 @media(max-width:760px){#kpiView .chart-grid.three,#kpiView .chart-grid.kpi-lower{grid-template-columns:1fr}#kpiView .chart-grid.kpi-lower>.panel:nth-child(2),#kpiView .chart-grid.kpi-lower>.panel:last-child{grid-column:auto}}
+/* Keep chart cards wide enough for readable axes and legends at common laptop widths. */
+@media(min-width:761px) and (max-width:1400px){
+ .chart-grid.three{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .chart-grid.three>.panel:last-child{grid-column:1/-1}
+ .chart-grid.three>.panel{min-height:300px}
+ .chart-grid.three .viz,.chart-grid.three .donut-layout{min-height:220px}
+ .chart-grid.project-lower>.panel,.chart-grid.task-lower>.panel{min-height:340px}
+}
+@media(min-width:1401px){
+ .chart-grid.three>.panel{min-height:300px}
+ .chart-grid.three .viz,.chart-grid.three .donut-layout{min-height:220px}
+ .chart-grid.project-lower>.panel,.chart-grid.task-lower>.panel{min-height:340px}
+}
 </style>
 </head>
 <body>
