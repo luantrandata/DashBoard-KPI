@@ -208,7 +208,7 @@ function timelineChart(el,rows){
 }
 function groupCounts(rows,key){const map=new Map();rows.forEach(x=>{const n=x[key]||'Chưa phân công';map.set(n,(map.get(n)||0)+1)});return [...map].map(([name,value])=>({name,value}))}
 function alertRows(rows){return rows.map(x=>`<tr><td class="strong">${esc(x.name)}</td><td>${esc(x.owner||'Chưa phân công')}</td><td>${pill(currentStatus(x))}</td><td>${fmtDate(x.due)}</td><td>${prog(x.progress)}</td></tr>`).join('')||'<tr><td class="empty" colspan="5">Không có công việc phù hợp.</td></tr>'}
-function renderDashboardCharts({emp,kpis,e,p,t,urgent}){
+function renderDashboardCharts({dep,emp,kpis,e,p,t,urgent}){
  const score=weightedScore(emp==='all'?kpis:e),achieved=kpis.filter(isAchieved),deptNames=new Set(kpis.map(x=>x.name)),pStatus=p.map(currentStatus),tStatus=t.map(currentStatus),pDone=pStatus.filter(x=>x==='Hoàn thành').length,pActive=pStatus.filter(x=>x==='Đang thực hiện').length,pLate=pStatus.filter(x=>x==='Quá hạn').length,tDone=tStatus.filter(x=>x==='Hoàn thành').length,tTodo=tStatus.filter(x=>x==='Chưa thực hiện').length,tActive=tStatus.filter(x=>x==='Đang thực hiện').length,tLate=tStatus.filter(x=>x==='Quá hạn').length,tSoon=tStatus.filter(x=>x==='Sắp đến hạn').length;
  const set=(sel,val)=>{const el=$(sel);if(el)el.textContent=String(val)};
  set('[data-kpi-metric="departments"]',deptNames.size);set('[data-kpi-metric="people"]',new Set(e.map(x=>x.name)).size);set('[data-kpi-metric="score"]',displayPct(score));set('[data-kpi-metric="projects"]',p.length);set('[data-kpi-metric="completed"]',pDone);set('[data-kpi-metric="overdue"]',pLate);
