@@ -293,9 +293,9 @@ function kpiYearChart(el,years,projectRows,kpiRows){
  const line=`<polyline points="${scores.map((v,i)=>`${X(i)},${P(v)}`).join(' ')}" fill="none" stroke="${C.green}" stroke-width="2.5"/>${scores.map((v,i)=>`<g class="chart-mark" data-cross-filter="year" data-cross-value="${esc(years[i])}"><circle cx="${X(i)}" cy="${P(v)}" r="${V.r}" fill="${C.green}"><title>${esc(years[i])}: ${displayPct(v)} KPI</title></circle><text x="${X(i)}" y="${P(v)-9}" text-anchor="middle" class="svg-value">${displayPct(v)}</text></g>`).join('')}`;
  el.innerHTML=`<div class="stack-legend"><span class="status-key"><i style="background:${C.blue}"></i>Số dự án</span><span class="status-key"><i style="background:${C.green}"></i>% đạt KPI</span></div><svg viewBox="0 0 ${w} ${V.h}" role="img" aria-label="Số dự án và tỷ lệ KPI theo năm học">${grid}${bars}${line}</svg>`;
 }
-function stackedOwnerChart(el,rows,field='owner',filterKind='employee'){
+function stackedOwnerChart(el,rows,field='owner',filterKind='employee',stateFn=currentStatus){
  const none=field==='department'?'Chưa phân loại':'Chưa phân công',buckets=new Map();
- rows.forEach(x=>{const name=x[field]||none,st=currentStatus(x)||'—';if(!buckets.has(name))buckets.set(name,{});buckets.get(name)[st]=(buckets.get(name)[st]||0)+1});
+ rows.forEach(x=>{const name=x[field]||none,st=stateFn(x)||'—';if(!buckets.has(name))buckets.set(name,{});buckets.get(name)[st]=(buckets.get(name)[st]||0)+1});
  const data=[...buckets.entries()].map(([name,states])=>({name,states,total:Object.values(states).reduce((a,b)=>a+b,0)})).sort((a,b)=>b.total-a.total).slice(0,8);
  if(!data.length){el.innerHTML=EMPTY;return}
  const present=new Set(data.flatMap(x=>Object.keys(x.states))),states=[...STATUS_ORDER.filter(x=>present.has(x)),...[...present].filter(x=>!STATUS_ORDER.includes(x))];
