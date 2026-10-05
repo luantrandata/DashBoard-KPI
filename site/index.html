@@ -190,6 +190,17 @@ body.view-expanded:after{content:"";position:fixed;inset:0;z-index:1199;backgrou
 #tasksView .task-top-grid .donut:after,#projectsView .project-top-grid .donut:after{inset:26px}
 #tasksView .task-top-grid .donut-center b,#projectsView .project-top-grid .donut-center b{font-size:20px}
 #tasksView .task-top-grid .panel-sub,#projectsView .project-top-grid .panel-sub{margin-bottom:8px}
+#kpi-department-chart svg{min-width:0}
+#kpiView .kpi-left-stack{grid-template-rows:minmax(0,1fr) auto;align-content:stretch}
+#kpiView .chart-grid.kpi-lower .kpi-left-stack>.panel:first-child{min-height:340px}
+#kpiView .chart-grid.kpi-lower .kpi-left-stack>.panel:last-child{min-height:0;padding:12px 16px}
+#kpiView .kpi-left-stack>.panel:last-child .panel-sub{margin:2px 0 4px}
+#kpiView .kpi-left-stack>.panel:last-child .donut-layout{min-height:0;gap:16px;justify-content:center}
+#kpiView .kpi-left-stack>.panel:last-child .donut{width:92px;height:92px}
+#kpiView .kpi-left-stack>.panel:last-child .donut:after{inset:19px}
+#kpiView .kpi-left-stack>.panel:last-child .donut-center b{font-size:17px}
+#kpiView .kpi-left-stack>.panel:last-child .donut-center span{font-size:10px}
+#kpiView .kpi-left-stack>.panel:last-child .donut-legend{font-size:12px;gap:4px}
 </style>
 </head>
 <body>
@@ -279,10 +290,10 @@ function kpiStatusYearChart(el,rows){
   return seg(d.achieved,gH,gY,C.green,'Đạt','KPI đạt')+seg(d.notAchieved,rH,rY,C.red,'Chưa đạt','KPI chưa đạt')+`<text x="${cx}" y="${base+20}" text-anchor="middle" class="svg-small">${esc(d.year)}</text>`}).join('');
  el.innerHTML=`<div class="stack-legend"><span class="status-key"><i style="background:${C.green}"></i>Đạt</span><span class="status-key"><i style="background:${C.red}"></i>Chưa đạt</span></div><svg viewBox="0 0 ${w} ${V.h}" role="img" aria-label="So sánh số KPI phòng ban đạt và chưa đạt theo năm học">${yGrid(ax,left,w-right,base,plot)}${bars}</svg>`;
 }
-function horizontalChart(el,rows,suffix='',defaultColor='#328cf0',crossFilter=''){
- const data=rows.slice().sort((a,b)=>b.value-a.value).slice(0,10),max=suffix==='%'?100:Math.max(1,...data.map(x=>Number(x.value))),h=34,w=V.w,top=9,left=190,right=48,height=Math.max(190,top+data.length*h+22);
+function horizontalChart(el,rows,suffix='',defaultColor='#328cf0',crossFilter='',opts={}){
+ const data=rows.slice().sort((a,b)=>b.value-a.value).slice(0,10),max=suffix==='%'?100:Math.max(1,...data.map(x=>Number(x.value))),h=opts.rowH||34,bh=opts.barH||17,w=V.w,top=9,left=190,right=48,height=Math.max(190,top+data.length*h+22);
  if(!data.length){el.innerHTML='<div class="empty">Không có dữ liệu trong phạm vi lọc.</div>';return}
- el.innerHTML=`<svg viewBox="0 0 ${w} ${height}" role="img" aria-label="Biểu đồ thanh ngang">${data.map((x,i)=>{const y=top+i*h+4,bw=Math.max(0,(w-left-right)*x.value/max),color=x.color||defaultColor,label=`${x.value}${suffix}${x.extra!==undefined?` · ${x.extra} dự án`:''}`,cross=crossFilter?`data-cross-filter="${crossFilter}" data-cross-value="${esc(x.name)}"`:'';return `<g class="chart-mark" ${cross}><title>${esc(x.name)}: ${esc(label)}</title><text x="${left-9}" y="${y+14}" text-anchor="end" class="svg-label">${esc(shortLabel(x.name))}</text><rect x="${left}" y="${y}" width="${bw}" height="17" rx="3" fill="${color}"/><text x="${Math.min(left+bw+6,w-right+6)}" y="${y+14}" class="svg-value">${esc(label)}</text></g>`}).join('')}</svg>`;
+ el.innerHTML=`<svg viewBox="0 0 ${w} ${height}" role="img" aria-label="Biểu đồ thanh ngang">${data.map((x,i)=>{const y=top+i*h+4,bw=Math.max(0,(w-left-right)*x.value/max),color=x.color||defaultColor,label=`${x.value}${suffix}${x.extra!==undefined?` · ${x.extra} dự án`:''}`,cross=crossFilter?`data-cross-filter="${crossFilter}" data-cross-value="${esc(x.name)}"`:'';return `<g class="chart-mark" ${cross}><title>${esc(x.name)}: ${esc(label)}</title><text x="${left-9}" y="${y+bh/2+5}" text-anchor="end" class="svg-label">${esc(shortLabel(x.name))}</text><rect x="${left}" y="${y}" width="${bw}" height="${bh}" rx="3" fill="${color}"/><text x="${Math.min(left+bw+6,w-right+6)}" y="${y+bh/2+5}" class="svg-value">${esc(label)}</text></g>`}).join('')}</svg>`;
 }
 function kpiYearChart(el,years,projectRows,kpiRows){
  if(!years.length){el.innerHTML=EMPTY;return}
@@ -357,7 +368,7 @@ function renderDashboardCharts({dep,emp,kpis,e,p,t,urgent}){
  const set=(sel,val)=>{const el=$(sel);if(el)el.textContent=String(val)};
  set('[data-kpi-metric="departments"]',deptNames.size);set('[data-kpi-metric="people"]',new Set(e.map(x=>x.name)).size);set('[data-kpi-metric="score"]',displayPct(score));set('[data-kpi-metric="projects"]',p.length);set('[data-kpi-metric="completed"]',pDone);set('[data-kpi-metric="overdue"]',pLate);
  const years=[...new Set(kpis.map(x=>cleanYear(x.schoolYear)))].sort();kpiYearChart($('#kpi-project-chart'),years,p,kpis);kpiStatusYearChart($('#kpi-status-chart'),kpis);
- const kpiGroups=[...groupByDepartment(kpis)],idleDepts=kpiGroups.filter(g=>g.items.every(x=>!(Number(x.weight)>0)&&!(Number(x.projects)>0))),kpiDept=kpiGroups.filter(g=>!idleDepts.includes(g)).map(g=>({name:g.name,value:Number(g.score)||0,extra:p.filter(x=>x.department===g.name).length,color:g.achieved?'#159447':'#dc2626'}));horizontalChart($('#kpi-department-chart'),kpiDept,'%','#328cf0','department');if(idleDepts.length)$('#kpi-department-chart').insertAdjacentHTML('beforeend',`<div class="muted" style="margin-top:8px">${idleDepts.length} phòng ban chưa triển khai KPI: ${esc(idleDepts.map(g=>g.name).join(', '))}</div>`);$('#kpi-department-chart').classList.add('kpi-department-chart');donutChart($('#kpi-project-status'),[...new Set(pStatus)].map(s=>({name:s,value:pStatus.filter(x=>x===s).length,color:statusColor(s)})),'dự án');
+ const kpiGroups=[...groupByDepartment(kpis)],idleDepts=kpiGroups.filter(g=>g.items.every(x=>!(Number(x.weight)>0)&&!(Number(x.projects)>0))),kpiDept=kpiGroups.filter(g=>!idleDepts.includes(g)).map(g=>({name:g.name,value:Number(g.score)||0,extra:p.filter(x=>x.department===g.name).length,color:g.achieved?'#159447':'#dc2626'}));const kRow=kpiDept.length<=3?68:kpiDept.length<=6?48:36;horizontalChart($('#kpi-department-chart'),kpiDept,'%','#328cf0','department',{rowH:kRow,barH:Math.round(kRow*.5)});$('#kpi-idle-note')?.remove();if(idleDepts.length)$('#kpi-department-chart').insertAdjacentHTML('afterend',`<div id="kpi-idle-note" class="muted" style="margin-top:8px">${idleDepts.length} phòng ban chưa triển khai KPI: ${esc(idleDepts.map(g=>g.name).join(', '))}</div>`);$('#kpi-department-chart').classList.add('kpi-department-chart');donutChart($('#kpi-project-status'),[...new Set(pStatus)].map(s=>({name:s,value:pStatus.filter(x=>x===s).length,color:statusColor(s)})),'dự án');
  $('.kpi-project-rows').innerHTML=p.slice(0,80).map(x=>`<tr class="project-row" data-project="${esc(x.name)}"><td>${esc(x.department||'—')}</td><td class="strong">${esc(x.kpi||x.name)}</td><td>${prog(x.progress,currentStatus(x))}</td><td>${pill(currentStatus(x))}</td></tr>`).join('')||'<tr><td colspan="4" class="empty">Không có dự án phù hợp.</td></tr>';
  $('.employee-rows').innerHTML=e.map(x=>`<tr><td>${esc(x.department)}</td><td class="strong">${esc(x.name)}</td><td>${prog(x.achievement,isAchieved(x)?'Đạt':/chưa đạt/i.test(resultText(x))?'Chưa đạt':'')}</td><td>${pill(resultText(x)||'Chưa có kết quả')}</td></tr>`).join('')||'<tr><td colspan="4" class="empty">Không có dữ liệu phù hợp.</td></tr>';
  set('[data-project-metric="total"]',p.length);set('[data-project-metric="todo"]',pStatus.filter(x=>x==='Chưa thực hiện').length);set('[data-project-metric="active"]',pActive);set('[data-project-metric="done"]',pDone);set('[data-project-metric="late"]',pLate);
