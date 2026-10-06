@@ -23,14 +23,17 @@ function buildPublicSample_() {
   const departmentRows = readRows_(book, 'KPIPhongBan', ['PhongBan', 'NamHoc', 'PhanTramDatKPI', 'TyTrongKPI', 'KetQua', 'SoNhanSu', 'SoDuAn']);
   const employeeRows = readRows_(book, 'KPINhanVien', ['HoVaTen', 'PhongBan', 'NamHoc', 'PhanTramDatKPI', 'TyTrongKPI', 'KetQua']);
   const projectRows = readRows_(book, 'DuAn', ['DuAnID', 'NamHoc', 'YeuCau', 'NhomCongViec', 'KPI', 'PhongBanPIC', 'PIC', 'PhanTram', 'NgayBatDau', 'NgayKetThuc', 'TrangThai']);
-  const taskRows = readRows_(book, 'CongViec', ['DuAnID', 'TenCongViecChiTiet', 'TenCongViec', 'NhomCongViec', 'PhongBanPIC', 'PIC', 'TienDoCVDone', 'NgayBatDau', 'NgayKetThuc', 'TrangThai']);
+  const taskRows = readRows_(book, 'CongViec', ['CongViecID', 'DuAnID', 'TenCongViecChiTiet', 'TenCongViec', 'NhomCongViec', 'PhongBanPIC', 'PIC', 'TienDoCVDone', 'NgayBatDau', 'NgayKetThuc', 'TrangThai']);
+  const detailRows = readRows_(book, 'LamViec', ['CongViecID', 'TenCongViecChiTiet', 'TenCongViec', 'NguoiThucHien', 'NgayBatDau', 'NgayKetThuc', 'TrangThai']);
 
   const peopleNames = [];
   employeeRows.forEach(r => peopleNames.push(r.HoVaTen));
   projectRows.forEach(r => peopleNames.push(r.PIC));
   taskRows.forEach(r => peopleNames.push(r.PIC));
+  detailRows.forEach(r => peopleNames.push(r.NguoiThucHien));
   const aliases = makeAliases_(peopleNames);
   const projectById = {};
+  const taskById = {};
 
   const departments = departmentRows
     .filter(r => clean_(r.PhongBan) && clean_(r.NamHoc))
@@ -75,20 +78,44 @@ function buildPublicSample_() {
       if (item.schoolYear && item.status) projects.push(item);
     });
 
+  // Cấp 2: CongViec (TenCongViec). Cấp 3: LamViec (TenCongViecChiTiet).
   const tasks = taskRows
     .filter(r => clean_(r.TrangThai))
     .map((r, index) => {
       const parent = projectById[clean_(r.DuAnID)];
       if (!parent || !parent.schoolYear) return null;
-      return {
+      const item = {
         key: 'task-' + (index + 1),
-        name: publicText_(r.TenCongViecChiTiet || r.TenCongViec || ('Công việc ' + (index + 1))),
-        project: parent ? parent.name : publicText_(r.NhomCongViec),
-        kpi: parent ? parent.kpi : publicText_(r.NhomCongViec),
-        department: clean_(r.PhongBanPIC) || (parent && parent.department) || '',
+        projectKey: parent.key,
+        name: publicText_(r.TenCongViec || r.TenCongViecChiTiet || ('Công việc ' + (index + 1))),
+        project: parent.name,
+        kpi: parent.kpi,
+        department: clean_(r.PhongBanPIC) || parent.department || '',
         owner: alias_(r.PIC, aliases),
         schoolYear: parent.schoolYear,
         progress: percent_(r.TienDoCVDone),
+        start: date_(r.NgayBatDau),
+        due: date_(r.NgayKetThuc),
+        status: status_(r.TrangThai)
+      };
+      const sourceKey = clean_(r.CongViecID);
+      if (sourceKey) taskById[sourceKey] = item;
+      return item;
+    }).filter(Boolean);
+
+  const details = detailRows
+    .filter(r => clean_(r.TrangThai))
+    .map((r, index) => {
+      const parent = taskById[clean_(r.CongViecID)];
+      if (!parent) return null;
+      return {
+        key: 'detail-' + (index + 1),
+        taskKey: parent.key,
+        projectKey: parent.projectKey,
+        name: publicText_(r.TenCongViecChiTiet || r.TenCongViec || ('Công việc chi tiết ' + (index + 1))),
+        department: parent.department,
+        owner: alias_(r.NguoiThucHien, aliases),
+        schoolYear: parent.schoolYear,
         start: date_(r.NgayBatDau),
         due: date_(r.NgayKetThuc),
         status: status_(r.TrangThai)
@@ -101,7 +128,8 @@ function buildPublicSample_() {
     departments,
     people,
     projects,
-    tasks
+    tasks,
+    details
   };
 }
 
