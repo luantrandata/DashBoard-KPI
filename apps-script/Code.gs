@@ -129,7 +129,8 @@ function buildPublicSample_() {
     people,
     projects,
     tasks,
-    details
+    details,
+    meta: { schemaVersion: 2, detailSourceRows: detailRows.length, detailLinked: details.length }
   };
 }
 

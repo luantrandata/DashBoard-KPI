@@ -7,6 +7,7 @@ Mỗi phiên bản là một git tag. Xem toàn bộ: `git tag` hoặc GitHub �
 | `v1.0-baseline` | Trạng thái trước các bổ sung: biểu đồ đã đồng nhất, hàng đầu thu gọn, "Dự án theo phòng ban" đứng trước "theo nhân sự" | — |
 | `v1.1-tien-do-ke-hoach` | Tab Dự án: biểu đồ **Tiến độ thực tế so với kế hoạch** (ngưỡng chậm `LAG_THRESHOLD = 20` điểm %) | `git revert 2e599aa` |
 | `v1.2-tab-cong-viec` | Tab Công việc: **Khối lượng việc đang mở theo nhân sự**, **Thời gian trễ hạn** (trước đây tên "Tuổi nợ quá hạn"), **Top dự án quá hạn**. Bỏ biểu đồ "Số công việc theo nhân sự" (đã được thay bằng biểu đồ khối lượng) | `git revert cb0b441 e69b7df` |
+| `v1.7.1-chan-doan-cap-3` | Timeline: hiện cảnh báo khi nguồn dữ liệu chưa trả cấp 3 (hoặc không gắn được `LamViec` vào `CongViec`); `Code.gs` trả thêm `meta` để chẩn đoán | `git revert <commit v1.7.1>` |
 | `v1.7-timeline-3-cap` | Tab **Timeline** dạng cây Dự án → Công việc → Công việc chi tiết (sheet `LamViec`): mở/đóng từng cấp, thu phóng Tuần/Tháng/Quý, vạch Hôm nay, cảnh báo quá hạn. `Code.gs` đọc thêm `LamViec` và trả `details` (cần deploy lại Apps Script) | `git revert 8b16b4f` |
 | `v1.6-kpi-bo-cuc-cot` | Tab KPI: cột trái (KPI theo phòng ban + Trạng thái dự án) hẹp hơn, bảng "Dự án theo KPI phòng ban" rộng và cao hơn (không còn thanh cuộn ngang), donut "Trạng thái dự án" cao hơn | `git revert b124281` |
 | `v1.5-kpi-phong-ban-lon-hon` | Tab KPI: thu nhỏ panel "Trạng thái dự án", mở rộng "KPI theo phòng ban" (hàng cao hơn, ghi chú phòng ban chưa triển khai nằm ngoài vùng cuộn, bỏ thanh cuộn ngang) | `git revert 9239fe9` |
