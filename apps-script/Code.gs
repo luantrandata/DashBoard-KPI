@@ -60,10 +60,11 @@ function buildPublicSample_() {
 
   const projects = [];
   projectRows.forEach((r, index) => {
-      const name = publicText_(r.YeuCau || r.NhomCongViec || ('Dự án ' + (index + 1)));
+      const name = publicText_(r.NhomCongViec || r.YeuCau || ('Dự án ' + (index + 1)));
       const item = {
         key: 'project-' + (index + 1),
         name,
+        group: publicText_(r.NhomCongViec || r.YeuCau || name),
         kpi: publicText_(r.KPI || r.YeuCau || r.NhomCongViec),
         department: clean_(r.PhongBanPIC),
         owner: alias_(r.PIC, aliases),

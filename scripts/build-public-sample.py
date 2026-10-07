@@ -93,10 +93,11 @@ def main():
     for index, r in enumerate(project_rows.itertuples(index=False), start=1):
         source_id = text(r.DuAnID)
         project_year = text(r.NamHoc)
-        name = public_text(r.YeuCau or r.NhomCongViec or f"Dự án {index}")
+        name = public_text(r.NhomCongViec or r.YeuCau or f"Dự án {index}")
         project = {
             "key": f"project-{index}",
             "name": name,
+            "group": public_text(r.NhomCongViec or r.YeuCau or name),
             "kpi": public_text(r.KPI or r.YeuCau or r.NhomCongViec),
             "department": text(r.PhongBanPIC),
             "owner": alias(r.PIC),
