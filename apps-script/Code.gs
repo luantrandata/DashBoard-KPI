@@ -1,8 +1,17 @@
 /**
- * Public, read-only sample-data endpoint for the KPI preview.
+ * Read-only endpoint for the KPI dashboard.
  * Deploy as a web app that executes as the spreadsheet owner.
- * Only selected fields are returned; contact fields, edit history, logs,
- * employee codes and source names are never included in the response.
+ * Only selected fields are returned; contact fields, edit history, logs and
+ * employee codes are never included in the response.
+ *
+ * Employee names are ALIASED by default. To return real names, set Script
+ * Properties (Project Settings > Script properties):
+ *   SHOW_REAL_NAMES = true      -> enable real names
+ *   ACCESS_CODE     = <secret>  -> (recommended) real names only when the
+ *                                  request carries ?code=<secret>; otherwise
+ *                                  the response stays aliased.
+ * The endpoint URL is public, so without ACCESS_CODE anyone with the link
+ * can read real names.
  */
 const SOURCE_SPREADSHEET_ID = '1eiulCUosKQsOqtiGjjRuRZfWXqO9QJ2XjW_UqcqgKWc';
 
@@ -12,13 +21,17 @@ function doGet(e) {
     return ContentService.createTextOutput('Invalid callback').setMimeType(ContentService.MimeType.TEXT);
   }
 
-  const payload = buildPublicSample_();
+  const props = PropertiesService.getScriptProperties();
+  const need = clean_(props.getProperty('ACCESS_CODE'));
+  const code = clean_(e && e.parameter && e.parameter.code);
+  const real = props.getProperty('SHOW_REAL_NAMES') === 'true' && (!need || code === need);
+  const payload = buildPublicSample_(real);
   return ContentService
     .createTextOutput(callback + '(' + JSON.stringify(payload) + ');')
     .setMimeType(ContentService.MimeType.JAVASCRIPT);
 }
 
-function buildPublicSample_() {
+function buildPublicSample_(real) {
   const book = SpreadsheetApp.openById(SOURCE_SPREADSHEET_ID);
   const departmentRows = readRows_(book, 'KPIPhongBan', ['PhongBan', 'NamHoc', 'PhanTramDatKPI', 'TyTrongKPI', 'KetQua', 'SoNhanSu', 'SoDuAn']);
   const employeeRows = readRows_(book, 'KPINhanVien', ['HoVaTen', 'PhongBan', 'NamHoc', 'PhanTramDatKPI', 'TyTrongKPI', 'KetQua']);
@@ -31,7 +44,7 @@ function buildPublicSample_() {
   projectRows.forEach(r => peopleNames.push(r.PIC));
   taskRows.forEach(r => peopleNames.push(r.PIC));
   detailRows.forEach(r => peopleNames.push(r.NguoiThucHien));
-  const aliases = makeAliases_(peopleNames);
+  const aliases = real ? null : makeAliases_(peopleNames);
   const projectById = {};
   const taskById = {};
 
@@ -125,7 +138,7 @@ function buildPublicSample_() {
 
   return {
     updatedAt: new Date().toISOString(),
-    privacy: 'anonymized-sample',
+    privacy: real ? 'named' : 'anonymized-sample',
     departments,
     people,
     projects,
@@ -171,7 +184,9 @@ function makeAliases_(values) {
 
 function alias_(value, aliases) {
   const name = clean_(value);
-  return name ? (aliases[name.toLowerCase()] || 'Người phụ trách') : 'Chưa phân công';
+  if (!name) return 'Chưa phân công';
+  if (aliases === null) return name;
+  return aliases[name.toLowerCase()] || 'Người phụ trách';
 }
 
 function clean_(value) {

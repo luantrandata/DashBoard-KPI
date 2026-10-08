@@ -123,3 +123,14 @@ git push origin main
 - Timeline chỉ **xem**, không kéo thả hay sửa ngày (dữ liệu nguồn là Google Sheets, chỉ đọc).
 - Công việc chi tiết (`LamViec`) không có cột tiến độ.
 - Màn hình điện thoại hiển thị được nhưng Timeline khá chật (cột tên 300px, ẩn cột Tiến độ và Phụ trách).
+
+## Hiển thị tên nhân viên thật (tùy chọn)
+
+Mặc định Apps Script trả tên đã mã hóa. Để hiện tên thật: Apps Script → Project Settings → Script properties:
+
+| Property | Giá trị | Tác dụng |
+|---|---|---|
+| `SHOW_REAL_NAMES` | `true` | Cho phép trả tên thật |
+| `ACCESS_CODE` | mã bí mật (khuyến nghị) | Chỉ trả tên thật khi người xem bấm **🔑 Tên thật** và nhập đúng mã; không đặt thì ai có link cũng thấy tên thật |
+
+Sau khi đổi `Code.gs`, cần Deploy → Manage deployments → Edit → New version.
