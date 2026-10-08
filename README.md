@@ -124,13 +124,13 @@ git push origin main
 - Công việc chi tiết (`LamViec`) không có cột tiến độ.
 - Màn hình điện thoại hiển thị được nhưng Timeline khá chật (cột tên 300px, ẩn cột Tiến độ và Phụ trách).
 
-## Hiển thị tên nhân viên thật (tùy chọn)
+## Tên nhân viên
 
-Mặc định Apps Script trả tên đã mã hóa. Để hiện tên thật: Apps Script → Project Settings → Script properties:
+Apps Script trả **tên thật** mặc định (cần Deploy → New version sau khi sửa `Code.gs`). Tùy chọn trong Script properties:
 
 | Property | Giá trị | Tác dụng |
 |---|---|---|
-| `SHOW_REAL_NAMES` | `true` | Cho phép trả tên thật |
-| `ACCESS_CODE` | mã bí mật (khuyến nghị) | Chỉ trả tên thật khi người xem bấm **🔑 Tên thật** và nhập đúng mã; không đặt thì ai có link cũng thấy tên thật |
+| `SHOW_REAL_NAMES` | `false` | Ép trả tên mã hóa cho mọi người |
+| `ACCESS_CODE` | mã bí mật | Chỉ trả tên thật khi người xem bấm **🔑 Tên thật** và nhập đúng mã |
 
-Sau khi đổi `Code.gs`, cần Deploy → Manage deployments → Edit → New version.
+Lưu ý: endpoint là public, khi chưa có đăng nhập/phân quyền thì ai có link đều đọc được tên thật.

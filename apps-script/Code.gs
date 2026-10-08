@@ -4,14 +4,13 @@
  * Only selected fields are returned; contact fields, edit history, logs and
  * employee codes are never included in the response.
  *
- * Employee names are ALIASED by default. To return real names, set Script
+ * Employee names are returned as REAL names by default. Optional Script
  * Properties (Project Settings > Script properties):
- *   SHOW_REAL_NAMES = true      -> enable real names
- *   ACCESS_CODE     = <secret>  -> (recommended) real names only when the
- *                                  request carries ?code=<secret>; otherwise
- *                                  the response stays aliased.
- * The endpoint URL is public, so without ACCESS_CODE anyone with the link
- * can read real names.
+ *   SHOW_REAL_NAMES = false     -> force aliased names for everyone
+ *   ACCESS_CODE     = <secret>  -> real names only when the request carries
+ *                                  ?code=<secret>; otherwise aliased.
+ * The endpoint URL is public: until login/authorization is added, anyone with
+ * the link can read real names.
  */
 const SOURCE_SPREADSHEET_ID = '1eiulCUosKQsOqtiGjjRuRZfWXqO9QJ2XjW_UqcqgKWc';
 
@@ -24,7 +23,7 @@ function doGet(e) {
   const props = PropertiesService.getScriptProperties();
   const need = clean_(props.getProperty('ACCESS_CODE'));
   const code = clean_(e && e.parameter && e.parameter.code);
-  const real = props.getProperty('SHOW_REAL_NAMES') === 'true' && (!need || code === need);
+  const real = props.getProperty('SHOW_REAL_NAMES') !== 'false' && (!need || code === need);
   const payload = buildPublicSample_(real);
   return ContentService
     .createTextOutput(callback + '(' + JSON.stringify(payload) + ');')
