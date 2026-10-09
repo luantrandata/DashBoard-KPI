@@ -8,6 +8,7 @@ Mỗi phiên bản là một git tag. Xem toàn bộ: `git tag` hoặc GitHub �
 | `v1.1-tien-do-ke-hoach` | Tab Dự án: biểu đồ **Tiến độ thực tế so với kế hoạch** (ngưỡng chậm `LAG_THRESHOLD = 20` điểm %) | `git revert 2e599aa` |
 | `v1.2-tab-cong-viec` | Tab Công việc: **Khối lượng việc đang mở theo nhân sự**, **Thời gian trễ hạn** (trước đây tên "Tuổi nợ quá hạn"), **Top dự án quá hạn**. Bỏ biểu đồ "Số công việc theo nhân sự" (đã được thay bằng biểu đồ khối lượng) | `git revert cb0b441 e69b7df` |
 | `v1.13.1-donut-tooltip` | Biểu đồ tròn: bỏ số ở chú thích; rê chuột vào lát hoặc chú thích hiện tooltip thành phần, tổng và % | `git revert <commit>` |
+| `v1.20.2-sua-vung-bam-icon` | Sửa lỗi bấm nút sổ xuống (›) lại mở AppSheet: icon ✎/📄 bị CSS chung của biểu đồ SVG (`min-width:280px`) làm phình vùng bấm; đặt kích thước icon 14px, `min-width:0`, `overflow:hidden` | `git revert <commit>` |
 | `v1.20.1-icon-bao-cao-cuoi-bang` | Biểu tượng 📄 link báo cáo chuyển về cột hẹp 28px ở mép phải bảng trái (giáp biểu đồ), thẳng hàng mọi dòng; ✎ sửa vẫn ở cạnh tên | `git revert <commit>` |
 | `v1.20-icon-bao-cao-va-sua` | Bỏ cột "Báo cáo" ở Timeline; link báo cáo thành biểu tượng 📄 ngay sau tên dòng; thêm biểu tượng ✎ ở dòng dự án/công việc/chi tiết chưa hoàn thành mở AppSheet để sửa (cấu hình `KPI_APPSHEET` trong `config.js`; đọc thêm `LamViecID`) | `git revert <commit>` |
 | `v1.19.1-client-id` | Điền OAuth Client ID để đọc trực tiếp Google Sheets | `git revert <commit>` |
