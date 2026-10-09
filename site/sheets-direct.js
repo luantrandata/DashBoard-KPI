@@ -52,7 +52,7 @@
     const employeeRows = rows(raw.KPINhanVien, ['HoVaTen', 'PhongBan', 'NamHoc', 'PhanTramDatKPI', 'TyTrongKPI', 'KetQua']);
     const projectRows = rows(raw.DuAn, ['DuAnID', 'NamHoc', 'YeuCau', 'NhomCongViec', 'KPI', 'PhongBanPIC', 'PIC', 'PhanTram', 'NgayBatDau', 'NgayKetThuc', 'TrangThai', 'LinkBaoCao']);
     const taskRows = rows(raw.CongViec, ['CongViecID', 'DuAnID', 'TenCongViecChiTiet', 'TenCongViec', 'NhomCongViec', 'PhongBanPIC', 'PIC', 'TienDoCVDone', 'NgayBatDau', 'NgayKetThuc', 'TrangThai', 'LinkBaoCao']);
-    const detailRows = rows(raw.LamViec, ['CongViecID', 'TenCongViecChiTiet', 'TenCongViec', 'NguoiThucHien', 'NgayBatDau', 'NgayKetThuc', 'TrangThai']);
+    const detailRows = rows(raw.LamViec, ['LamViecID', 'CongViecID', 'TenCongViecChiTiet', 'TenCongViec', 'NguoiThucHien', 'NgayBatDau', 'NgayKetThuc', 'TrangThai']);
     const projectById = {}, taskById = {};
 
     const departments = departmentRows.filter(r => clean(r.PhongBan) && clean(r.NamHoc)).map(r => ({
@@ -74,7 +74,7 @@
         kpi: publicText(r.KPI || r.YeuCau || r.NhomCongViec),
         hasKpi: !!clean(r.KPI), department: clean(r.PhongBanPIC), owner: owner(r.PIC),
         schoolYear: clean(r.NamHoc), progress: pct(r.PhanTram),
-        start: date(r.NgayBatDau), due: date(r.NgayKetThuc), status: status(r.TrangThai), link: url(r.LinkBaoCao)
+        start: date(r.NgayBatDau), due: date(r.NgayKetThuc), status: status(r.TrangThai), link: url(r.LinkBaoCao), srcId: clean(r.DuAnID)
       };
       const k = clean(r.DuAnID);
       if (k) projectById[k] = item;
@@ -90,7 +90,7 @@
         project: parent.name, kpi: parent.kpi, hasKpi: parent.hasKpi,
         department: clean(r.PhongBanPIC) || parent.department || '', owner: owner(r.PIC),
         schoolYear: parent.schoolYear, progress: pct(r.TienDoCVDone),
-        start: date(r.NgayBatDau), due: date(r.NgayKetThuc), status: status(r.TrangThai), link: url(r.LinkBaoCao)
+        start: date(r.NgayBatDau), due: date(r.NgayKetThuc), status: status(r.TrangThai), link: url(r.LinkBaoCao), srcId: clean(r.CongViecID)
       };
       const k = clean(r.CongViecID);
       if (k) taskById[k] = item;
@@ -104,7 +104,7 @@
         key: 'detail-' + (i + 1), taskKey: parent.key, projectKey: parent.projectKey, hasKpi: parent.hasKpi,
         name: publicText(r.TenCongViecChiTiet || r.TenCongViec || ('Công việc chi tiết ' + (i + 1))),
         department: parent.department, owner: owner(r.NguoiThucHien), schoolYear: parent.schoolYear,
-        start: date(r.NgayBatDau), due: date(r.NgayKetThuc), status: status(r.TrangThai)
+        start: date(r.NgayBatDau), due: date(r.NgayKetThuc), status: status(r.TrangThai), srcId: clean(r.LamViecID)
       };
     }).filter(Boolean);
 
