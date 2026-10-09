@@ -34,8 +34,8 @@ function buildPublicSample_(real) {
   const book = SpreadsheetApp.openById(SOURCE_SPREADSHEET_ID);
   const departmentRows = readRows_(book, 'KPIPhongBan', ['PhongBan', 'NamHoc', 'PhanTramDatKPI', 'TyTrongKPI', 'KetQua', 'SoNhanSu', 'SoDuAn']);
   const employeeRows = readRows_(book, 'KPINhanVien', ['HoVaTen', 'PhongBan', 'NamHoc', 'PhanTramDatKPI', 'TyTrongKPI', 'KetQua']);
-  const projectRows = readRows_(book, 'DuAn', ['DuAnID', 'NamHoc', 'YeuCau', 'NhomCongViec', 'KPI', 'PhongBanPIC', 'PIC', 'PhanTram', 'NgayBatDau', 'NgayKetThuc', 'TrangThai']);
-  const taskRows = readRows_(book, 'CongViec', ['CongViecID', 'DuAnID', 'TenCongViecChiTiet', 'TenCongViec', 'NhomCongViec', 'PhongBanPIC', 'PIC', 'TienDoCVDone', 'NgayBatDau', 'NgayKetThuc', 'TrangThai']);
+  const projectRows = readRows_(book, 'DuAn', ['DuAnID', 'NamHoc', 'YeuCau', 'NhomCongViec', 'KPI', 'PhongBanPIC', 'PIC', 'PhanTram', 'NgayBatDau', 'NgayKetThuc', 'TrangThai', 'LinkBaoCao']);
+  const taskRows = readRows_(book, 'CongViec', ['CongViecID', 'DuAnID', 'TenCongViecChiTiet', 'TenCongViec', 'NhomCongViec', 'PhongBanPIC', 'PIC', 'TienDoCVDone', 'NgayBatDau', 'NgayKetThuc', 'TrangThai', 'LinkBaoCao']);
   const detailRows = readRows_(book, 'LamViec', ['CongViecID', 'TenCongViecChiTiet', 'TenCongViec', 'NguoiThucHien', 'NgayBatDau', 'NgayKetThuc', 'TrangThai']);
 
   const peopleNames = [];
@@ -85,7 +85,8 @@ function buildPublicSample_(real) {
         progress: percent_(r.PhanTram),
         start: date_(r.NgayBatDau),
         due: date_(r.NgayKetThuc),
-        status: status_(r.TrangThai)
+        status: status_(r.TrangThai),
+        link: url_(r.LinkBaoCao)
       };
       const sourceKey = clean_(r.DuAnID);
       if (sourceKey) projectById[sourceKey] = item;
@@ -111,7 +112,8 @@ function buildPublicSample_(real) {
         progress: percent_(r.TienDoCVDone),
         start: date_(r.NgayBatDau),
         due: date_(r.NgayKetThuc),
-        status: status_(r.TrangThai)
+        status: status_(r.TrangThai),
+        link: url_(r.LinkBaoCao)
       };
       const sourceKey = clean_(r.CongViecID);
       if (sourceKey) taskById[sourceKey] = item;
@@ -211,6 +213,11 @@ function percent_(value) {
   const n = Number(value);
   if (!Number.isFinite(n)) return 0;
   return Math.max(0, Math.min(100, n <= 1 ? n * 100 : n));
+}
+
+function url_(value) {
+  const t = clean_(value);
+  return /^https?:\/\/\S+$/i.test(t) ? t : '';
 }
 
 function status_(value) {

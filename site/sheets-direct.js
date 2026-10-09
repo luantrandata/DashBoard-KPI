@@ -21,6 +21,7 @@
     .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi, '[email đã ẩn]')
     .replace(/(?:\+?\d[\d .()\-]{7,}\d)/g, '[số đã ẩn]');
   const status = v => clean(v).replace(/^\s*\d+\.\s*/, '');
+  const url = v => { const t = clean(v); return /^https?:\/\/\S+$/i.test(t) ? t : ''; };   // chỉ nhận http(s), không qua publicText
   const owner = v => clean(v) || 'Chưa phân công';
   const pad = n => String(n).padStart(2, '0');
   function date(v) {
@@ -49,8 +50,8 @@
   function build(raw) {
     const departmentRows = rows(raw.KPIPhongBan, ['PhongBan', 'NamHoc', 'PhanTramDatKPI', 'TyTrongKPI', 'KetQua', 'SoNhanSu', 'SoDuAn']);
     const employeeRows = rows(raw.KPINhanVien, ['HoVaTen', 'PhongBan', 'NamHoc', 'PhanTramDatKPI', 'TyTrongKPI', 'KetQua']);
-    const projectRows = rows(raw.DuAn, ['DuAnID', 'NamHoc', 'YeuCau', 'NhomCongViec', 'KPI', 'PhongBanPIC', 'PIC', 'PhanTram', 'NgayBatDau', 'NgayKetThuc', 'TrangThai']);
-    const taskRows = rows(raw.CongViec, ['CongViecID', 'DuAnID', 'TenCongViecChiTiet', 'TenCongViec', 'NhomCongViec', 'PhongBanPIC', 'PIC', 'TienDoCVDone', 'NgayBatDau', 'NgayKetThuc', 'TrangThai']);
+    const projectRows = rows(raw.DuAn, ['DuAnID', 'NamHoc', 'YeuCau', 'NhomCongViec', 'KPI', 'PhongBanPIC', 'PIC', 'PhanTram', 'NgayBatDau', 'NgayKetThuc', 'TrangThai', 'LinkBaoCao']);
+    const taskRows = rows(raw.CongViec, ['CongViecID', 'DuAnID', 'TenCongViecChiTiet', 'TenCongViec', 'NhomCongViec', 'PhongBanPIC', 'PIC', 'TienDoCVDone', 'NgayBatDau', 'NgayKetThuc', 'TrangThai', 'LinkBaoCao']);
     const detailRows = rows(raw.LamViec, ['CongViecID', 'TenCongViecChiTiet', 'TenCongViec', 'NguoiThucHien', 'NgayBatDau', 'NgayKetThuc', 'TrangThai']);
     const projectById = {}, taskById = {};
 
@@ -73,7 +74,7 @@
         kpi: publicText(r.KPI || r.YeuCau || r.NhomCongViec),
         hasKpi: !!clean(r.KPI), department: clean(r.PhongBanPIC), owner: owner(r.PIC),
         schoolYear: clean(r.NamHoc), progress: pct(r.PhanTram),
-        start: date(r.NgayBatDau), due: date(r.NgayKetThuc), status: status(r.TrangThai)
+        start: date(r.NgayBatDau), due: date(r.NgayKetThuc), status: status(r.TrangThai), link: url(r.LinkBaoCao)
       };
       const k = clean(r.DuAnID);
       if (k) projectById[k] = item;
@@ -89,7 +90,7 @@
         project: parent.name, kpi: parent.kpi, hasKpi: parent.hasKpi,
         department: clean(r.PhongBanPIC) || parent.department || '', owner: owner(r.PIC),
         schoolYear: parent.schoolYear, progress: pct(r.TienDoCVDone),
-        start: date(r.NgayBatDau), due: date(r.NgayKetThuc), status: status(r.TrangThai)
+        start: date(r.NgayBatDau), due: date(r.NgayKetThuc), status: status(r.TrangThai), link: url(r.LinkBaoCao)
       };
       const k = clean(r.CongViecID);
       if (k) taskById[k] = item;
