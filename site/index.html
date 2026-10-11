@@ -359,15 +359,15 @@ const WK={sel:'all',quick:'all',q:'',open:new Set(),init:false};
 let WO_LAST=null,WO_W=0;
 function workOverview(p,t){
  WO_LAST=[p,t];const ov=$('#w-ov');WO_W=Math.round((ov&&ov.clientWidth)||0);
- const COL={p:'#7c5cff',t:'#2fa36b'},legend=`<div class="stack-legend"><span class="status-key"><i style="background:${COL.p}"></i>Dự án (cột)</span><span class="status-key"><i style="background:${COL.t};height:3px;border-radius:2px;width:14px"></i>Công việc (đường)</span></div>`;
+ const COL={p:'#328cf0',t:'#f59e0b'},legend=`<div class="stack-legend"><span class="status-key"><i style="background:${COL.p}"></i>Dự án</span><span class="status-key"><i style="background:${COL.t}"></i>Công việc</span></div>`;
  const tip=(title,a,b)=>esc(`<div><b>${esc(title)}</b></div><div class="tp"><span><i style="background:${COL.p}"></i>Dự án</span><span>${a}</span></div><div class="tp"><span><i style="background:${COL.t}"></i>Công việc</span><span>${b}</span></div>`);
  const widthOf=el=>Math.max(320,Math.round(el.clientWidth||(el.parentElement&&el.parentElement.clientWidth)||600));
  const combo=(el,items,multi,note)=>{
   const w=widthOf(el),left=36,right=14,top=20,base=164,plot=136,Hh=base+(multi?42:26),ax=niceAxis(Math.max(1,...items.flatMap(v=>[v.p,v.t]))),gap=(w-left-right)/items.length,bw=Math.min(30,gap*.5),H=v=>v/ax.top*plot,X=i=>left+gap*(i+.5),Y=v=>base-H(v);
   const cols=items.map((v,i)=>{const h=H(v.p),inside=h>=18;
    return `<g data-tip="${tip(v.title,v.p,v.t)}"><rect x="${X(i)-gap/2}" y="${top-12}" width="${gap}" height="${base-top+12}" fill="transparent"/><rect x="${X(i)-bw/2}" y="${base-h}" width="${bw}" height="${h}" rx="3" fill="${COL.p}"/>${v.p?`<text x="${X(i)}" y="${inside?base-h+13:base-h-5}" text-anchor="middle" class="svg-value" ${inside?'style="fill:#fff"':''}>${v.p}</text>`:''}<text x="${X(i)}" y="${base+16}" text-anchor="middle" class="svg-small">${v.label.map((l,j)=>`<tspan x="${X(i)}" dy="${j?14:0}">${esc(l)}</tspan>`).join('')}</text></g>`}).join('');
-  const line=`<g style="pointer-events:none"><polyline points="${items.map((v,i)=>`${X(i)},${Y(v.t)}`).join(' ')}" fill="none" stroke="${COL.t}" stroke-width="2.5" stroke-linejoin="round"/>${items.map((v,i)=>`<circle cx="${X(i)}" cy="${Y(v.t)}" r="4" fill="#fff" stroke="${COL.t}" stroke-width="2.5"/><text x="${X(i)}" y="${Y(v.t)-9}" text-anchor="middle" class="svg-value" style="fill:${COL.t};paint-order:stroke;stroke:#fff;stroke-width:3px">${v.t}</text>`).join('')}</g>`;
-  el.innerHTML=legend+`<svg viewBox="0 0 ${w} ${Hh}" role="img" aria-label="Số dự án (cột) và công việc (đường)">${yGrid(ax,left,w-right,base,plot)}${cols}${line}</svg>`+(note?`<div class="muted" style="margin-top:2px">${note}</div>`:'');
+  const line=`<g style="pointer-events:none"><polyline points="${items.map((v,i)=>`${X(i)},${Y(v.t)}`).join(' ')}" fill="none" stroke="${COL.t}" stroke-width="2.5" stroke-linejoin="round"/>${items.map((v,i)=>`<circle cx="${X(i)}" cy="${Y(v.t)}" r="4" fill="#fff" stroke="${COL.t}" stroke-width="2.5"/><text x="${X(i)}" y="${Y(v.t)-9}" text-anchor="middle" class="svg-value" style="fill:#d97706;paint-order:stroke;stroke:#fff;stroke-width:3px">${v.t}</text>`).join('')}</g>`;
+  el.innerHTML=legend+`<svg viewBox="0 0 ${w} ${Hh}" role="img" aria-label="Số dự án và công việc">${yGrid(ax,left,w-right,base,plot)}${cols}${line}</svg>`+(note?`<div class="muted" style="margin-top:2px">${note}</div>`:'');
  };
  const sel=$('#timemode'),modeTxt=sel&&sel.selectedOptions[0]?sel.selectedOptions[0].textContent:'',mo=$('#w-o-mode');if(mo)mo.textContent=modeTxt?'· '+modeTxt:'';
  const tEl=$('#w-o-time'),first=new Date($('#from').value+'T00:00:00'),last=new Date($('#to').value+'T00:00:00');
