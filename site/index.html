@@ -295,7 +295,7 @@ th{position:sticky}.table-wrap table th{overflow:hidden;text-overflow:ellipsis}
 .chart-tip{position:fixed;z-index:3000;pointer-events:none;background:#14233f;color:#fff;border-radius:9px;padding:9px 11px;font-size:12px;line-height:1.55;box-shadow:0 8px 24px #0a1a3a55;max-width:300px;min-width:170px}.chart-tip .tp{display:flex;justify-content:space-between;gap:16px}.chart-tip .tp i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:6px}.chart-tip .tt{border-top:1px solid #ffffff44;margin-top:4px;padding-top:4px;font-weight:700}
 .dv{position:absolute;transform:translate(-50%,-50%);font-size:11.5px;font-weight:800;z-index:2;pointer-events:none;color:#fff;text-shadow:0 1px 2px #0005}.dv.dark{color:#33465f;text-shadow:none}
 .dh{display:inline-block;margin:3px 0 0 6px;padding:1px 7px;border-radius:999px;font-size:10.5px;font-weight:700;white-space:nowrap;line-height:1.5}td>.dh,.w-tr>div>.dh{display:block;width:fit-content;margin-left:0}.dh.soon{background:#fef3c7;color:#b45309}.dh.late{background:#fee2e2;color:#b91c1c}.due-rule{color:#8a99ad;font-size:12px;margin-left:12px}#rangeLabel{flex:1 1 320px;min-width:0;font-size:12px;line-height:1.55;color:#4a5b73}#rangeLabel b{color:#6b7c93;font-weight:700}
-.w-ov{margin:12px 0}.w-ov summary{cursor:pointer;font-weight:700;font-size:15px}.w-ov[open] summary{margin-bottom:10px}.w-ov-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.w-ov-full{grid-column:1/-1}.w-ov .viz{min-height:0;overflow:visible}.w-ov .viz svg{min-width:0}.w-ov-two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.w-sub{font-size:12px;font-weight:700;color:#405675;margin-bottom:2px}@media(max-width:900px){.w-ov-grid,.w-ov-two{grid-template-columns:1fr}}
+.w-ov{margin:12px 0}.w-ov summary{cursor:pointer;font-weight:700;font-size:15px}.w-ov[open] summary{margin-bottom:10px}.w-ov-grid{align-items:start;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.w-ov-full{grid-column:1/-1}.w-ov .viz{min-height:0;overflow:visible}.w-ov .viz svg{min-width:0}.w-ov-two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.w-sub{font-size:12px;font-weight:700;color:#405675;margin-bottom:2px}@media(max-width:900px){.w-ov-grid,.w-ov-two{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -356,9 +356,13 @@ const dueHint=x=>{const i=dueInfo(x);return i?`<span class="dh ${i.cls}" title="
 const weightedScore=rows=>{const valid=rows.filter(x=>Number(x.weight)>0);const weight=valid.reduce((a,x)=>a+Number(x.weight),0);return weight?valid.reduce((a,x)=>a+Number(x.achievement)*Number(x.weight),0)/weight:null};
 const displayPct=x=>x===null||x===undefined?'—':`${Number(x).toLocaleString('vi-VN',{maximumFractionDigits:1})}%`;
 const WK={sel:'all',quick:'all',q:'',open:new Set(),init:false};
+let WO_LAST=null,WO_W=0;
 function workOverview(p,t){
- const COL={p:'#7c5cff',t:'#2fa36b'},legend=`<div class="stack-legend"><span class="status-key"><i style="background:${COL.p}"></i>Dự án</span><span class="status-key"><i style="background:${COL.t}"></i>Công việc</span></div>`;
+ WO_LAST=[p,t];const ov=$('#w-ov');WO_W=Math.round((ov&&ov.clientWidth)||0);
+ const COL={p:'#7c5cff',t:'#2fa36b'},key=(c,line)=>`<span class="status-key"><i style="background:${c};${line?'height:3px;border-radius:2px;width:14px':''}"></i>`;
+ const legend=(pl,tl)=>`<div class="stack-legend">${key(COL.p)}${pl}</span>${key(COL.t,pl.includes('cột'))}${tl}</span></div>`;
  const tip=(title,a,b)=>esc(`<div><b>${esc(title)}</b></div><div class="tp"><span><i style="background:${COL.p}"></i>Dự án</span><span>${a}</span></div><div class="tp"><span><i style="background:${COL.t}"></i>Công việc</span><span>${b}</span></div>`);
+ const widthOf=el=>Math.max(320,Math.round(el.clientWidth||(el.parentElement&&el.parentElement.clientWidth)||600));
  const sel=$('#timemode'),modeTxt=sel&&sel.selectedOptions[0]?sel.selectedOptions[0].textContent:'',mo=$('#w-o-mode');if(mo)mo.textContent=modeTxt?'· '+modeTxt:'';
  const tEl=$('#w-o-time'),first=new Date($('#from').value+'T00:00:00'),last=new Date($('#to').value+'T00:00:00');
  if(tEl){
@@ -367,23 +371,25 @@ function workOverview(p,t){
    const mode=sel?sel.value:'overlap',months=[];for(const c=new Date(first.getFullYear(),first.getMonth(),1);c<=last&&months.length<24;c.setMonth(c.getMonth()+1))months.push(new Date(c));
    const hit=(x,ms,me)=>{const st=x.start||x.due,en=x.due||x.start;if(!st&&!en)return false;if(mode==='end')return en>=ms&&en<=me;if(mode==='start')return st>=ms&&st<=me;return st<=me&&en>=ms};
    const vals=months.map(m=>{const ms=ymd(new Date(m.getFullYear(),m.getMonth(),1)),me=ymd(new Date(m.getFullYear(),m.getMonth()+1,0));return{p:p.filter(x=>hit(x,ms,me)).length,t:t.filter(x=>hit(x,ms,me)).length,m}});
-   const w=900,{left,right,base,plot,top}=V,ax=niceAxis(Math.max(1,...vals.flatMap(v=>[v.p,v.t]))),gap=(w-left-right)/months.length,bw=Math.min(22,gap*.36),H=v=>v/ax.top*plot;
-   const bars=vals.map((v,i)=>{const cx=left+gap*(i+.5),lb=`T${v.m.getMonth()+1}/${String(v.m.getFullYear()).slice(-2)}`,one=(n,x,c)=>`<rect x="${x}" y="${base-H(n)}" width="${bw}" height="${H(n)}" rx="3" fill="${c}"/>${n?`<text x="${x+bw/2}" y="${Math.max(top-4,base-H(n)-5)}" text-anchor="middle" class="svg-value">${n}</text>`:''}`;
-    return `<g data-tip="${tip('Tháng '+(v.m.getMonth()+1)+'/'+v.m.getFullYear(),v.p,v.t)}"><rect x="${cx-gap/2}" y="${top-10}" width="${gap}" height="${base-top+10}" fill="transparent"/>${one(v.p,cx-bw-1,COL.p)}${one(v.t,cx+1,COL.t)}<text x="${cx}" y="${base+20}" text-anchor="middle" class="svg-small">${lb}</text></g>`}).join('');
-   tEl.innerHTML=legend+`<svg viewBox="0 0 ${w} ${V.h}" role="img" aria-label="Số dự án và công việc theo tháng">${yGrid(ax,left,w-right,base,plot)}${bars}</svg>`;
+   const w=widthOf(tEl),left=36,right=14,top=20,base=164,plot=136,Hh=190,ax=niceAxis(Math.max(1,...vals.flatMap(v=>[v.p,v.t]))),gap=(w-left-right)/months.length,bw=Math.min(30,gap*.5),H=v=>v/ax.top*plot,X=i=>left+gap*(i+.5),Y=v=>base-H(v);
+   const cols=vals.map((v,i)=>{const h=H(v.p),inside=h>=18,lb=`T${v.m.getMonth()+1}/${String(v.m.getFullYear()).slice(-2)}`;
+    return `<g data-tip="${tip('Tháng '+(v.m.getMonth()+1)+'/'+v.m.getFullYear(),v.p,v.t)}"><rect x="${X(i)-gap/2}" y="${top-12}" width="${gap}" height="${base-top+12}" fill="transparent"/><rect x="${X(i)-bw/2}" y="${base-h}" width="${bw}" height="${h}" rx="3" fill="${COL.p}"/>${v.p?`<text x="${X(i)}" y="${inside?base-h+13:base-h-5}" text-anchor="middle" class="svg-value" ${inside?'style="fill:#fff"':''}>${v.p}</text>`:''}<text x="${X(i)}" y="${base+16}" text-anchor="middle" class="svg-small">${lb}</text></g>`}).join('');
+   const line=`<g style="pointer-events:none"><polyline points="${vals.map((v,i)=>`${X(i)},${Y(v.t)}`).join(' ')}" fill="none" stroke="${COL.t}" stroke-width="2.5" stroke-linejoin="round"/>${vals.map((v,i)=>`<circle cx="${X(i)}" cy="${Y(v.t)}" r="4" fill="#fff" stroke="${COL.t}" stroke-width="2.5"/><text x="${X(i)}" y="${Y(v.t)-9}" text-anchor="middle" class="svg-value" style="fill:${COL.t};paint-order:stroke;stroke:#fff;stroke-width:3px">${v.t}</text>`).join('')}</g>`;
+   tEl.innerHTML=legend('Dự án (cột)','Công việc (đường)')+`<svg viewBox="0 0 ${w} ${Hh}" role="img" aria-label="Số dự án (cột) và công việc (đường) theo tháng">${yGrid(ax,left,w-right,base,plot)}${cols}${line}</svg>`;
   }
  }
  const hGroup=(el,field,none,limit)=>{
   if(!el)return;const m=new Map(),add=(x,k)=>{const n=x[field]||none;if(!m.has(n))m.set(n,{name:n,p:0,t:0});m.get(n)[k]++};p.forEach(x=>add(x,'p'));t.forEach(x=>add(x,'t'));
   const all=[...m.values()].sort((a,b)=>(b.p+b.t)-(a.p+a.t)||String(a.name).localeCompare(String(b.name),'vi')),rows=all.slice(0,limit);
   if(!rows.length){el.innerHTML=EMPTY;return}
-  const w=600,left=150,right=40,top=6,rh=40,bh=13,max=Math.max(1,...rows.flatMap(r=>[r.p,r.t])),Hh=top+rows.length*rh+8,B=v=>(w-left-right)*v/max;
-  el.innerHTML=legend+`<svg viewBox="0 0 ${w} ${Hh}" role="img" aria-label="Số dự án và công việc theo ${field==='department'?'phòng ban':'nhân viên'}">`+rows.map((r,i)=>{const y=top+i*rh+4;return `<g data-tip="${tip(r.name,r.p,r.t)}"><rect x="0" y="${y-3}" width="${w}" height="${rh-2}" fill="transparent"/><text x="${left-9}" y="${y+bh+3}" text-anchor="end" class="svg-label">${esc(shortLabel(r.name))}</text><rect x="${left}" y="${y}" width="${B(r.p)}" height="${bh}" rx="3" fill="${COL.p}"/><text x="${left+B(r.p)+6}" y="${y+bh-2}" class="svg-value">${r.p}</text><rect x="${left}" y="${y+bh+2}" width="${B(r.t)}" height="${bh}" rx="3" fill="${COL.t}"/><text x="${left+B(r.t)+6}" y="${y+2*bh}" class="svg-value">${r.t}</text></g>`}).join('')+'</svg>'+(all.length>rows.length?`<div class="muted" style="margin-top:4px">Hiển thị ${rows.length}/${all.length} (nhiều nhất)</div>`:'');
+  const w=widthOf(el),left=Math.min(150,Math.round(w*.34)),right=34,top=4,rh=30,bh=11,max=Math.max(1,...rows.flatMap(r=>[r.p,r.t])),Hh=top+rows.length*rh+4,B=v=>(w-left-right)*v/max,lab=Math.floor(left/6.4);
+  el.innerHTML=legend('Dự án','Công việc')+`<svg viewBox="0 0 ${w} ${Hh}" role="img" aria-label="Số dự án và công việc theo ${field==='department'?'phòng ban':'nhân viên'}">`+rows.map((r,i)=>{const y=top+i*rh+3,nm=String(r.name).length>lab?String(r.name).slice(0,lab-1)+'…':r.name,v=(n,yy,c)=>n?`<rect x="${left}" y="${yy}" width="${B(n)}" height="${bh}" rx="3" fill="${c}"/><text x="${left+B(n)+5}" y="${yy+bh-2}" class="svg-value">${n}</text>`:'';return `<g data-tip="${tip(r.name,r.p,r.t)}"><rect x="0" y="${y-2}" width="${w}" height="${rh-1}" fill="transparent"/><text x="${left-8}" y="${y+bh+3}" text-anchor="end" class="svg-label">${esc(nm)}</text>${v(r.p,y,COL.p)}${v(r.t,y+bh+2,COL.t)}</g>`}).join('')+'</svg>'+(all.length>rows.length?`<div class="muted" style="margin-top:2px">Hiển thị ${rows.length}/${all.length} (nhiều nhất)</div>`:'');
  };
- hGroup($('#w-o-dept'),'department','Chưa phân loại',10);hGroup($('#w-o-emp'),'owner','Chưa phân công',12);
+ hGroup($('#w-o-dept'),'department','Chưa phân loại',8);hGroup($('#w-o-emp'),'owner','Chưa phân công',10);
  const stRows=a=>{const sts=[...new Set(a.map(currentStatus))].sort((x,y)=>{const i=STATUS_ORDER.indexOf(x),j=STATUS_ORDER.indexOf(y);return (i<0?99:i)-(j<0?99:j)});return sts.map(s=>({name:s||'—',value:a.filter(x=>currentStatus(x)===s).length,color:statusColor(s)}))};
  donutChart($('#w-o-st-p'),stRows(p),'dự án');donutChart($('#w-o-st-t'),stRows(t),'công việc');
 }
+if(typeof ResizeObserver!=='undefined'){const o=$('#w-ov');if(o)new ResizeObserver(()=>{if(WO_LAST&&Math.abs(Math.round(o.clientWidth)-WO_W)>8)workOverview(WO_LAST[0],WO_LAST[1])}).observe(o)}
 function renderWork(p,t,d){
  const el=$('#workView');if(!el)return;
  workOverview(p,t);
