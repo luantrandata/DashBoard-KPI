@@ -298,6 +298,7 @@ th{position:sticky}.table-wrap table th{overflow:hidden;text-overflow:ellipsis}
 .w-ov{margin:12px 0}.w-ov summary{cursor:pointer;font-weight:700;font-size:15px}.w-ov[open] summary{margin-bottom:10px}.w-ov-grid{align-items:start;display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:14px}.w-ov .donut-layout{justify-content:center}.w-ov-full{grid-column:1/-1}.w-ov .viz{min-height:0;overflow:visible}.w-ov .viz svg{min-width:0}.w-ov-two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.w-sub{font-size:12px;font-weight:700;color:#405675;margin-bottom:2px}@media(max-width:900px){.w-ov-grid,.w-ov-two{grid-template-columns:1fr}}
 .w-strip{gap:14px;margin-bottom:16px}.w-strip .w-grp{gap:10px;padding:12px 18px;border-radius:14px}.w-strip .w-gt{font-size:14px;margin-right:6px}.w-strip .w-chip{padding:8px 14px;font-size:16px;border-radius:10px}.w-strip .w-chip b{font-size:21px;margin-right:6px}
 .w-strip{flex-wrap:nowrap;gap:.6em;font-size:clamp(10px,.8vw,15px);overflow-x:auto}.w-strip .w-grp{flex:1 1 auto;gap:.3em;padding:.6em .65em;border-radius:1em;white-space:nowrap}.w-strip .w-gt{font-size:.8em;margin-right:.3em}.w-strip .w-chip{padding:.35em .5em;font-size:1em;border-radius:.6em;white-space:nowrap}.w-strip .w-chip b{font-size:1.3em;margin-right:.25em}.w-strip .w-chip.ok b{color:#16a34a}
+.w-strip .w-chip:hover{background:#e6eefb}.w-strip .w-chip.on{background:#dbeafe;outline:1px solid #328cf0}.w-strip button.w-chip{cursor:pointer;border:0;font-family:inherit}
 </style>
 </head>
 <body>
@@ -393,14 +394,26 @@ function workOverview(p,t){
  donutChart($('#w-o-st-p'),stRows(p),'dự án');donutChart($('#w-o-st-t'),stRows(t),'công việc');
 }
 if(typeof ResizeObserver!=='undefined'){const o=$('#w-ov');if(o)new ResizeObserver(()=>{if(WO_LAST&&Math.abs(Math.round(o.clientWidth)-WO_W)>8)workOverview(WO_LAST[0],WO_LAST[1])}).observe(o)}
-function statStripHtml(p,t,d,click){
+const SK={lv:'',m:''};
+function stripFilter(p,t,d){
+ if(!SK.lv||!SK.m||SK.m==='all')return[p,t,d];
+ const f={run:x=>currentStatus(x)==='Đang thực hiện',urgent:isUrgent,done:x=>currentStatus(x)==='Hoàn thành'}[SK.m];if(!f)return[p,t,d];
+ const pk=new Map(p.map(x=>[x.key,x])),pn=new Map(p.map(x=>[x.name,x])),pOf=x=>(x.projectKey&&pk.get(x.projectKey))||pn.get(x.project)||null,projKeys=T=>new Set(T.map(x=>{const q=pOf(x);return q&&q.key}));
+ let P=p,T=t,D=d;
+ if(SK.lv==='p'){P=p.filter(f);const ks=new Set(P.map(x=>x.key));T=t.filter(x=>{const q=pOf(x);return q&&ks.has(q.key)});const tk=new Set(T.map(x=>x.key));D=d.filter(x=>tk.has(x.taskKey))}
+ else if(SK.lv==='t'){T=t.filter(f);const tk=new Set(T.map(x=>x.key));D=d.filter(x=>tk.has(x.taskKey));const ks=projKeys(T);P=p.filter(x=>ks.has(x.key))}
+ else{D=d.filter(f);const tk=new Set(D.map(x=>x.taskKey));T=t.filter(x=>tk.has(x.key));const ks=projKeys(T);P=p.filter(x=>ks.has(x.key))}
+ return[P,T,D];
+}
+function statStripHtml(p,t,d){
  const isDone=x=>currentStatus(x)==='Hoàn thành',isRun=x=>currentStatus(x)==='Đang thực hiện';
- const st=(n,lb,cls)=>`<span class="w-chip ${cls||''}" style="cursor:default"><b>${n}</b>${lb}</span>`,chip=(q,cls,n,lb)=>click?`<button class="w-chip ${cls||''} ${WK.quick===q&&q!=='all'?'on':''}" data-wq="${q}"><b>${n}</b>${lb}</button>`:st(n,lb,cls);
- const grp=(title,a,q)=>{const n=[a.length,a.filter(isRun).length,a.filter(isUrgent).length,a.filter(isDone).length],c=(i,k,cls,lb)=>q?chip(k,cls,n[i],lb):st(n[i],lb,cls);return `<div class="w-grp"><span class="w-gt">${title}</span>${c(0,'all','','tổng')}${c(1,'run','','đang làm')}${c(2,'urgent',n[2]?'bad':'','quá hạn / sắp hạn')}${c(3,'done','ok','hoàn thành')}</div>`};
- return grp('DỰ ÁN',p,false)+grp('CÔNG VIỆC',t,true)+grp('CHI TIẾT',d,false);
+ const grp=(title,lv,a)=>{const n=[a.length,a.filter(isRun).length,a.filter(isUrgent).length,a.filter(isDone).length],ks=['all','run','urgent','done'],lbs=['tổng','đang làm','quá hạn / sắp hạn','hoàn thành'],cls=['','',n[2]?'bad':'','ok'];
+  return `<div class="w-grp"><span class="w-gt">${title}</span>${ks.map((k,i)=>`<button type="button" class="w-chip ${cls[i]} ${SK.lv===lv&&SK.m===k&&k!=='all'?'on':''}" data-sk="${lv}:${k}" title="${k==='all'?'Bỏ lọc':'Lọc các biểu đồ và danh sách theo mục này; bấm lại để bỏ lọc'}"><b>${n[i]}</b>${lbs[i]}</button>`).join('')}</div>`};
+ return grp('DỰ ÁN','p',p)+grp('CÔNG VIỆC','t',t)+grp('CHI TIẾT','d',d);
 }
 function renderWork(p,t,d){
  const el=$('#workView');if(!el)return;
+ $('#w-strip').innerHTML=statStripHtml(p,t,d);[p,t,d]=stripFilter(p,t,d);
  workOverview(p,t);
  const byKey=new Map(p.map(x=>[x.key,x])),byName=new Map(p.map(x=>[x.name,x]));
  const pOf=x=>(x.projectKey&&byKey.get(x.projectKey))||byName.get(x.project)||null;
@@ -411,7 +424,7 @@ function renderWork(p,t,d){
  const avg=a=>a.length?Math.round(a.reduce((s,x)=>s+(Number(x.progress)||0),0)/a.length):0;
  const pLate=p.filter(isOverdue).length,tUrg=t.filter(isUrgent).length,tNo=t.filter(x=>!x.owner&&!isClosed(x)).length;
  const chip=(q,cls,n,lb)=>`<button class="w-chip ${cls||''} ${WK.quick===q&&q!=='all'?'on':''}" data-wq="${q}"><b>${n}</b>${lb}</button>`;
- $('#w-strip').innerHTML=statStripHtml(p,t,d,true); const risk=x=>(tOf.get(x.key)||[]).filter(isUrgent).length;
+ const risk=x=>(tOf.get(x.key)||[]).filter(isUrgent).length;
  const ps=[...p].sort((a,b)=>(isOverdue(b)-isOverdue(a))||(risk(b)-risk(a))||((Number(a.progress)||0)-(Number(b.progress)||0))||String(a.name).localeCompare(String(b.name),'vi'));
  $('#w-plist').innerHTML=`<div class="w-prow ${WK.sel==='all'?'sel':''}" data-wsel="all"><span class="n">Tất cả dự án</span><span class="pc">${avg(p)}%</span><span class="m">${t.length} công việc${tUrg?` <span class="w-badge">⚠ ${tUrg}</span>`:''}</span></div>`+ps.map(x=>{const ts=tOf.get(x.key)||[],r=risk(x);return `<div class="w-prow ${WK.sel===x.key?'sel':''}" data-wsel="${esc(x.key)}"><span class="n">${esc(x.name)}</span><span class="pc">${Math.round(Number(x.progress)||0)}%</span><span class="m">${pill(currentStatus(x))}<span>${ts.length} việc</span>${r?`<span class="w-badge">⚠ ${r}</span>`:''}<span>Hạn ${fmtDate(x.due)}${dueHint(x)}</span></span></div>`}).join('')||'<div class="empty">Không có dự án phù hợp.</div>';
  const sp=WK.sel==='all'?null:byKey.get(WK.sel);
@@ -441,7 +454,7 @@ function render(){
  const e=people.filter(x=>common(x)&&(!kpiSel.length||(kpiSel.includes('KPI chưa đạt')&&!isAchieved(x))||(kpiSel.includes('KPI đạt')&&isAchieved(x))));
   const urgent=t.filter(isUrgent);
   updateSummaries({dep,emp,kpis,e,p,t,urgent});
- const tkAll=new Set(tasks.filter(x=>common(x)&&inDates(x)&&kfOK(x)&&(!pS2.size||pS2.has(pkOf(x)))&&(!tS2.size||tS2.has(x.key))).map(x=>x.key));{const tk3=new Set(t.map(x=>x.key)),ts=$('#tl-strip');if(ts)ts.innerHTML=statStripHtml(p,t,details.filter(x=>tk3.has(x.taskKey)&&SF.d(x)),false)}treeTimeline($('#tree-timeline'),p,t,details.filter(x=>tkAll.has(x.taskKey)&&SF.d(x)));renderFilterInfo();
+ const tkAll=new Set(tasks.filter(x=>common(x)&&inDates(x)&&kfOK(x)&&(!pS2.size||pS2.has(pkOf(x)))&&(!tS2.size||tS2.has(x.key))).map(x=>x.key));{const tk3=new Set(t.map(x=>x.key)),ts=$('#tl-strip');if(ts)ts.innerHTML=statStripHtml(p,t,details.filter(x=>tk3.has(x.taskKey)&&SF.d(x)));const fl=stripFilter(p,t,details.filter(x=>tkAll.has(x.taskKey)&&SF.d(x)));treeTimeline($('#tree-timeline'),fl[0],fl[1],fl[2])}renderFilterInfo();
 }
 function groupByDepartment(rows){const groups=new Map();rows.forEach(x=>{const key=x.department||x.name||'Chưa phân loại';if(!groups.has(key))groups.set(key,[]);groups.get(key).push(x)});return [...groups.entries()].map(([name,items])=>({name,items,score:weightedScore(items),achieved:items.every(isAchieved)}))}
 function setRing(el,ratio){const n=Math.max(0,Math.min(100,Number(ratio)||0));el.style.background=`conic-gradient(#2c8ff9 0 ${n}%,#e7edf5 ${n}% 100%)`}
@@ -699,6 +712,7 @@ function fillPT(){const yS=new Set([...MS.year].map(cleanYear)),inY=x=>!yS.size|
  if(tSel.dataset.sig!==tSig){tSel.innerHTML='<option value="all">Tất cả công việc</option>'+ts.map(x=>`<option value="${esc(x.key)}">${esc(x.name)}${one?'':' · '+esc(x.project||'')}</option>`).join('');tSel.dataset.sig=tSig;const ok=new Set(ts.map(x=>x.key));[...MS.taskf].forEach(k=>ok.has(k)||MS.taskf.delete(k));msDraw('taskf')}}
 function msChanged(id,keepOpen){if(id==='department'){MS.employee.clear();msDraw('employee')}if(id==='project'||id==='department'||id==='year'){/* tùy chọn công việc/dự án sẽ được lọc lại khi render */}msDraw(id);if(keepOpen){/* giữ dropdown mở */}if(id==='year')$('#period').dispatchEvent(new Event('change'));else render()}
 populateFilters();
+document.addEventListener('click',e=>{const sk=e.target.closest('[data-sk]');if(sk){const [lv,m]=sk.dataset.sk.split(':');if(m==='all'||(SK.lv===lv&&SK.m===m)){SK.lv=SK.m=''}else{SK.lv=lv;SK.m=m}render();return}});
 document.addEventListener('click',e=>{const v=e.target.closest('#workView');if(!v)return;const q=e.target.closest('[data-wq]'),sl=e.target.closest('[data-wsel]'),tg=e.target.closest('[data-wt]');if(q){WK.quick=WK.quick===q.dataset.wq?'all':q.dataset.wq;if(q.closest('#w-strip'))WK.sel='all';render()}else if(sl){WK.sel=sl.dataset.wsel;render()}else if(tg){const k=tg.dataset.wt;WK.open.has(k)?WK.open.delete(k):WK.open.add(k);render()}});
 document.addEventListener('input',e=>{if(e.target.id==='w-q'){WK.q=e.target.value;const pos=e.target.selectionStart;render();const n=$('#w-q');n.focus();n.setSelectionRange(pos,pos)}});
 $('#w-charts')&&$('#w-charts').addEventListener('toggle',()=>render());
@@ -716,7 +730,7 @@ function renderFilterInfo(){const el=$('#rangeLabel');if(!el)return;const tab=ac
  const groups=new Map();(LEVELS_BY_TAB[tab]||['p','t','d']).forEach(k=>{const arr=[...MS.status].filter(v=>v[0]===k&&v[1]===':').map(v=>v.slice(2));if(!arr.length||arr.length>=STATUS_LIST.length)return;const ord=STATUS_LIST.filter(v=>arr.includes(v)),ex=STATUS_LIST.filter(v=>!arr.includes(v)),txt=ex.length&&ex.length<ord.length?'trừ '+ex.join(', '):ord.join(', ');if(!groups.has(txt))groups.set(txt,[]);groups.get(txt).push(LV_NAME[k])});
  if(groups.size)add('Trạng thái',[...groups].map(([txt,names])=>names.join('/')+' ('+txt+')').join(', '));
  add('Dự án',list('project'));if(TASK_TABS.includes(tab))add('Công việc',list('taskf'));
- el.innerHTML=parts.join(' · ')};$('#timemode').addEventListener('change',()=>{rangeText();render()});$('#from').addEventListener('change',()=>{rangeText();render()});$('#to').addEventListener('change',()=>{rangeText();render()});$('#year').addEventListener('change',()=>$('#period').dispatchEvent(new Event('change')));$('#reset').addEventListener('click',()=>{const latest=$('#year').options[1]?.value||'all';['department','employee','kpires','status','project','taskf'].forEach(id=>MS[id].clear());resetStatusDefaults();MS.year.clear();latest!=='all'&&MS.year.add(latest);MSIDS.forEach(msDraw);$('#kpiflag').value='both';$('#timemode').value='overlap';$('#search').value='';$('#period').value='full';$('#subperiod').classList.add('hidden');$('#period').dispatchEvent(new Event('change'))});
+ el.innerHTML=parts.join(' · ')};$('#timemode').addEventListener('change',()=>{rangeText();render()});$('#from').addEventListener('change',()=>{rangeText();render()});$('#to').addEventListener('change',()=>{rangeText();render()});$('#year').addEventListener('change',()=>$('#period').dispatchEvent(new Event('change')));$('#reset').addEventListener('click',()=>{SK.lv=SK.m='';const latest=$('#year').options[1]?.value||'all';['department','employee','kpires','status','project','taskf'].forEach(id=>MS[id].clear());resetStatusDefaults();MS.year.clear();latest!=='all'&&MS.year.add(latest);MSIDS.forEach(msDraw);$('#kpiflag').value='both';$('#timemode').value='overlap';$('#search').value='';$('#period').value='full';$('#subperiod').classList.add('hidden');$('#period').dispatchEvent(new Event('change'))});
 function installExpandButtons(){
  $$('.viz.timeline,.table-wrap').forEach((widget,i)=>{const panel=widget.closest('.panel');if(!panel)return;const grid=widget.closest('.alert-grid'),holder=grid?[...grid.children].find(node=>node.contains(widget)):panel,heading=holder?.querySelector('.panel-title')||panel.querySelector('.alert-heading')||panel.querySelector('.panel-title');if(!heading||heading.querySelector('.expand-btn'))return;const btn=document.createElement('button');btn.type='button';btn.className='expand-btn';btn.textContent='⛶ Mở rộng';btn.setAttribute('aria-label','Mở rộng '+heading.textContent.trim());btn.setAttribute('aria-expanded','false');btn.dataset.expandIndex=String(i);heading.classList.add('expandable-heading');heading.appendChild(btn)});
 }
