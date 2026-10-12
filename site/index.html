@@ -305,6 +305,10 @@ th{position:sticky}.table-wrap table th{overflow:hidden;text-overflow:ellipsis}
 .w-prow{grid-template-columns:minmax(0,1fr) clamp(110px,34%,200px) auto;column-gap:10px}.w-prow .n{grid-column:1;grid-row:1}.w-prow .m{grid-column:1;grid-row:2}.w-prow .pc{grid-column:3;grid-row:1/3;align-self:center}.w-prow .w-mcol{grid-column:2;grid-row:1/3;align-self:center}
 .w-mb{display:flex;align-items:center;gap:6px}.w-mtrack{flex:1;min-width:0}.w-mbar{display:flex;height:17px;border-radius:4px;overflow:hidden}.w-mbar i{display:flex;align-items:center;justify-content:center;min-width:0;overflow:hidden;font-style:normal;font-size:10px;font-weight:700;color:#fff}.w-mb b{font-size:12px;min-width:18px;text-align:right;color:#283b56}.w-mb.none{color:#9aa8bb;font-size:12px}
 .w-mlegend{position:sticky;top:0;z-index:1;background:#fff;display:flex;gap:10px;flex-wrap:wrap;font-size:11px;color:#6b7c93;padding:2px 10px 6px}.w-mlegend i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:4px}
+.w-prow{grid-template-columns:var(--pcols,minmax(150px,1fr) 240px 64px)}.w-prow .pc{text-align:right}.w-mb b{min-width:22px;text-align:left}
+.w-phwrap{position:sticky;top:0;z-index:2;background:#fff}.w-phwrap .w-mlegend{position:static;padding-bottom:4px}
+.w-phead{display:grid;grid-template-columns:var(--pcols,minmax(150px,1fr) 240px 64px);column-gap:10px;padding:5px 11px;font-size:11px;font-weight:700;color:#6b7c93;text-transform:uppercase;letter-spacing:.03em;border-bottom:1px solid #e5ebf3;margin-bottom:4px}.w-phead>div{position:relative}.w-phead>div:last-child{text-align:right}
+.pcol-rs{position:absolute;left:-8px;top:-4px;bottom:-4px;width:12px;cursor:col-resize;touch-action:none}.pcol-rs::after{content:"";position:absolute;left:5px;top:3px;bottom:3px;width:2px;border-radius:1px;background:#b7c5d9;opacity:.5}.pcol-rs:hover::after{opacity:1;background:#328cf0}
 </style>
 </head>
 <body>
@@ -418,6 +422,10 @@ function workOverview(p,t){
  if(bar)bar.innerHTML=act.length?act.map(k=>`<button type="button" class="ck-chip" data-ck-clear="${k}">${esc(lbl[k](CK[k]))} ✕</button>`).join('')+(act.length>1?'<button type="button" class="ck-chip all" data-ck-clear="all">Bỏ tất cả</button>':''):'';
 }
 if(typeof ResizeObserver!=='undefined'){const o=$('#w-ov');if(o)new ResizeObserver(()=>{if(WO_LAST&&Math.abs(Math.round(o.clientWidth)-WO_W)>8)workOverview(WO_LAST[0],WO_LAST[1])}).observe(o)}
+const plW=()=>{const a=(CS.pl||{}).w||[];return[a[0]||240,a[1]||64]};
+function applyPl(){const el=$('#w-plist');if(!el)return;const w=plW();el.style.setProperty('--pcols',`minmax(150px,1fr) ${w[0]}px ${w[1]}px`)}
+document.addEventListener('pointerdown',e=>{const h=e.target.closest('[data-pcol]');if(!h)return;e.preventDefault();e.stopPropagation();const i=Number(h.dataset.pcol)-1,x0=e.clientX,w0=plW()[i],lim=[[110,420],[44,120]][i];const mv=ev=>{const a=plW();a[i]=Math.max(lim[0],Math.min(lim[1],Math.round(w0-(ev.clientX-x0))));CS.pl={w:a};applyPl()},up=()=>{document.removeEventListener('pointermove',mv);document.removeEventListener('pointerup',up);csSave()};document.addEventListener('pointermove',mv);document.addEventListener('pointerup',up)});
+document.addEventListener('dblclick',e=>{if(e.target.closest('[data-pcol]')){CS.pl={};csSave();applyPl()}});
 const SK={lv:'',m:''};
 function stripFilter(p,t,d){
  if(!SK.lv||!SK.m||SK.m==='all')return[p,t,d];
@@ -449,11 +457,11 @@ function renderWork(p,t,d){
  const chip=(q,cls,n,lb)=>`<button class="w-chip ${cls||''} ${WK.quick===q&&q!=='all'?'on':''}" data-wq="${q}"><b>${n}</b>${lb}</button>`;
  const risk=x=>(tOf.get(x.key)||[]).filter(isUrgent).length;
  const ps=[...p].sort((a,b)=>(isOverdue(b)-isOverdue(a))||(risk(b)-risk(a))||((Number(a.progress)||0)-(Number(b.progress)||0))||String(a.name).localeCompare(String(b.name),'vi'));
- const OS=['Chưa thực hiện','Đang thực hiện','Chờ duyệt','Pending','Sắp đến hạn','Quá hạn'],mxO=Math.max(1,...ps.map(x=>(tOf.get(x.key)||[]).filter(y=>!isClosed(y)).length)),stKeys=m=>[...m.keys()].sort((a,b)=>{const i=OS.indexOf(a),j=OS.indexOf(b);return (i<0?50:i)-(j<0?50:j)}),countOpen=a=>{const m=new Map();a.filter(x=>!isClosed(x)).forEach(x=>{const k=openState(x);m.set(k,(m.get(k)||0)+1)});return m};
- const miniBar=(a,max)=>{const m=countOpen(a),n=[...m.values()].reduce((x,y)=>x+y,0);if(!n)return '<span class="w-mb none">—</span>';const keys=stKeys(m),w=max?Math.max(8,Math.round(n/max*100)):100;return `<div class="w-mb" title="${esc(keys.map(k=>k+': '+m.get(k)).join(' · '))}"><div class="w-mtrack"><div class="w-mbar" style="width:${w}%">${keys.map(k=>`<i style="flex:${m.get(k)};background:${statusColor(k)};${k==='Chưa thực hiện'?'color:#475569':''}">${m.get(k)}</i>`).join('')}</div></div><b>${n}</b></div>`};
- const lgM=countOpen(t),legend=lgM.size?`<div class="w-mlegend"><span>Công việc đang mở:</span>${stKeys(lgM).map(k=>`<span><i style="background:${statusColor(k)}"></i>${esc(k)}</span>`).join('')}</div>`:'';
+ const OS=['Hoàn thành','Chưa thực hiện','Đang thực hiện','Chờ duyệt','Pending','Hủy','Sắp đến hạn','Quá hạn'],mxO=Math.max(1,...ps.map(x=>(tOf.get(x.key)||[]).length)),stKeys=m=>[...m.keys()].sort((a,b)=>{const i=OS.indexOf(a),j=OS.indexOf(b);return (i<0?50:i)-(j<0?50:j)}),countSt=a=>{const m=new Map();a.forEach(x=>{const k=openState(x);m.set(k,(m.get(k)||0)+1)});return m};
+ const miniBar=(a,max)=>{const m=countSt(a),n=a.length;if(!n)return '<span class="w-mb none">—</span>';const keys=stKeys(m),w=max?Math.max(8,Math.round(n/max*100)):100;return `<div class="w-mb" title="${esc(keys.map(k=>k+': '+m.get(k)).join(' · '))}"><b>${n}</b><div class="w-mtrack"><div class="w-mbar" style="width:${w}%">${keys.map(k=>`<i style="flex:${m.get(k)};background:${statusColor(k)};${k==='Chưa thực hiện'?'color:#475569':''}">${m.get(k)}</i>`).join('')}</div></div></div>`};
+ const lgM=countSt(t),legend=`<div class="w-phwrap">${lgM.size?`<div class="w-mlegend"><span>Trạng thái công việc:</span>${stKeys(lgM).map(k=>`<span><i style="background:${statusColor(k)}"></i>${esc(k)}</span>`).join('')}</div>`:''}<div class="w-phead"><div>Dự án</div><div>Công việc<i class="pcol-rs" data-pcol="1" title="Kéo để chỉnh độ rộng cột"></i></div><div>Tiến độ<i class="pcol-rs" data-pcol="2" title="Kéo để chỉnh độ rộng cột"></i></div></div></div>`;
  $('#w-plist').innerHTML=legend+`<div class="w-prow ${WK.sel==='all'?'sel':''}" data-wsel="all"><span class="n">Tất cả dự án</span><span class="pc">${avg(p)}%</span><span class="m">${t.length} công việc${tUrg?` <span class="w-badge">⚠ ${tUrg}</span>`:''}</span><span class="w-mcol">${miniBar(t,0)}</span></div>`+ps.map(x=>{const ts=tOf.get(x.key)||[],r=risk(x);return `<div class="w-prow ${WK.sel===x.key?'sel':''}" data-wsel="${esc(x.key)}"><span class="n">${esc(x.name)}</span><span class="pc">${Math.round(Number(x.progress)||0)}%</span><span class="m">${pill(currentStatus(x))}<span>${ts.length} việc</span>${r?`<span class="w-badge">⚠ ${r}</span>`:''}<span>Hạn ${fmtDate(x.due)}${dueHint(x)}</span></span><span class="w-mcol">${miniBar(ts,mxO)}</span></div>`}).join('')||'<div class="empty">Không có dự án phù hợp.</div>';
- const sp=WK.sel==='all'?null:byKey.get(WK.sel);
+ applyPl(); const sp=WK.sel==='all'?null:byKey.get(WK.sel);
  let scope=sp?(tOf.get(sp.key)||[]):t;
  const qf={all:()=>true,run:isRun,urgent:isUrgent,noowner:x=>!x.owner&&!isClosed(x),done:isDone}[WK.quick]||(()=>true),q=WK.q.trim().toLowerCase();
  const dBy=new Map();d.forEach(x=>{(dBy.get(x.taskKey)||dBy.set(x.taskKey,[]).get(x.taskKey)).push(x)});
