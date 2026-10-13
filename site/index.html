@@ -309,6 +309,8 @@ th{position:sticky}.table-wrap table th{overflow:hidden;text-overflow:ellipsis}
 .w-phwrap{position:sticky;top:0;z-index:2;background:#fff}.w-phwrap .w-mlegend{position:static;padding-bottom:4px}
 .w-phead{display:grid;grid-template-columns:var(--pcols,minmax(150px,1fr) 240px 64px);column-gap:10px;padding:5px 11px;font-size:11px;font-weight:700;color:#6b7c93;text-transform:uppercase;letter-spacing:.03em;border-bottom:1px solid #e5ebf3;margin-bottom:4px}.w-phead>div{position:relative}.w-phead>div:last-child{text-align:right}
 .pcol-rs{position:absolute;left:-8px;top:-4px;bottom:-4px;width:12px;cursor:col-resize;touch-action:none}.pcol-rs::after{content:"";position:absolute;left:5px;top:3px;bottom:3px;width:2px;border-radius:1px;background:#b7c5d9;opacity:.5}.pcol-rs:hover::after{opacity:1;background:#328cf0}
+.w-split{align-items:stretch}.w-left,.w-right{max-height:calc(100vh - 24px)}.w-right{display:flex;flex-direction:column}.w-right .w-treewrap{flex:1 1 auto;max-height:none;min-height:240px}
+@media(max-width:1000px){.w-right{max-height:none;display:block}.w-right .w-treewrap{max-height:calc(100vh - 300px);min-height:320px}}
 </style>
 </head>
 <body>
