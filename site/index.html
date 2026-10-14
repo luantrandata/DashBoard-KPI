@@ -323,6 +323,11 @@ th{position:sticky}.table-wrap table th{overflow:hidden;text-overflow:ellipsis}
 .w-prow .pc{grid-column:2;text-align:center}.w-prow .w-mcol{grid-column:3}.w-phead>div:nth-child(2){text-align:center}.w-phead>div:last-child{text-align:left}.w-mb b{text-align:right}
 .w-ov-blk.b1{grid-template-areas:"t d p" "s s p"}.b1>.a-t{grid-area:t}.b1>.a-d{grid-area:d}.b1>.a-p{grid-area:p}.b1>.a-s{grid-area:s}
 @media(max-width:1250px){.w-ov-blk.b1{grid-template-areas:"t d" "s s" "p p"}}@media(max-width:800px){.w-ov-blk.b1{grid-template-areas:"t" "d" "s" "p"}}
+.w-staff{max-height:340px;overflow:auto;border-top:1px solid #e5ebf3}.w-shead,.w-srow{display:grid;grid-template-columns:minmax(150px,1.2fr) 56px minmax(100px,1fr) minmax(140px,1.3fr);gap:10px;align-items:center;padding:7px 11px}
+.w-shead{position:sticky;top:0;z-index:2;background:#fff;font-size:11px;font-weight:700;color:#6b7c93;text-transform:uppercase;letter-spacing:.03em;border-bottom:1px solid #e5ebf3}.w-shead>div:nth-child(2){text-align:center}
+.w-srow{border:1px solid transparent;border-radius:10px;cursor:pointer}.w-srow:hover{background:#f5f8fd}.w-srow.ck-sel{background:#eaf3ff;border-color:#9cc7f7}
+.w-srow .sn{display:flex;flex-direction:column;gap:2px;min-width:0}.w-srow .sn b{font-size:13px;line-height:1.3}.w-srow .sn span{font-size:12px;color:#6b7c93}.w-srow .sp{font-weight:700;text-align:center;font-size:13px}
+.a-s .w-mlegend{position:static;padding:0 0 6px}
 </style>
 </head>
 <body>
@@ -425,6 +430,16 @@ function workOverview(p,t){
    combo(tEl,months.map(m=>{const ms=ymd(new Date(m.getFullYear(),m.getMonth(),1)),me=ymd(new Date(m.getFullYear(),m.getMonth()+1,0));return{ck:'month:'+m.getFullYear()+'-'+String(m.getMonth()+1).padStart(2,'0'),p:pT.filter(x=>hit(x,ms,me)).length,t:tT.filter(x=>hit(x,ms,me)).length,label:[`T${m.getMonth()+1}/${String(m.getFullYear()).slice(-2)}`],title:'Tháng '+(m.getMonth()+1)+'/'+m.getFullYear()}}),false);
   }
  }
+ const staffList=el=>{
+  if(!el)return;const [pS2,tS2]=XF('empB'),none='Chưa phân công',m=new Map(),g=n=>{n=n||none;if(!m.has(n))m.set(n,{name:n,p:[],t:[]});return m.get(n)};
+  pS2.forEach(x=>g(x.owner).p.push(x));tS2.forEach(x=>g(x.owner).t.push(x));
+  const rows=[...m.values()].sort((a,b)=>(b.t.length+b.p.length)-(a.t.length+a.p.length)||String(a.name).localeCompare(String(b.name),'vi'));
+  if(!rows.length){el.innerHTML=EMPTY;return}
+  const OSL=['Hoàn thành','Chưa thực hiện','Đang thực hiện','Chờ duyệt','Pending','Hủy','Sắp đến hạn','Quá hạn'],cnt=a=>{const c=new Map();a.forEach(x=>{const k=openState(x);c.set(k,(c.get(k)||0)+1)});return c},keys=c=>[...c.keys()].sort((a,b)=>{const i=OSL.indexOf(a),j=OSL.indexOf(b);return (i<0?50:i)-(j<0?50:j)});
+  const bar=a=>{if(!a.length)return '<span class="w-mb none">—</span>';const c=cnt(a);return `<div class="w-mb" title="${esc(keys(c).map(k=>k+': '+c.get(k)).join(' · '))}"><div class="w-mtrack"><div class="w-mbar">${keys(c).map(k=>`<i style="flex:${c.get(k)};background:${statusColor(k)};${k==='Chưa thực hiện'?'color:#475569':''}">${c.get(k)}</i>`).join('')}</div></div><b>${a.length}</b></div>`},avg=a=>a.length?Math.round(a.reduce((s,x)=>s+(Number(x.progress)||0),0)/a.length):0;
+  const all=cnt([...pS2,...tS2]);
+  el.innerHTML=`<div class="w-mlegend"><span>Trạng thái:</span>${keys(all).map(k=>`<span><i style="background:${statusColor(k)}"></i>${esc(k)}</span>`).join('')}</div><div class="w-staff"><div class="w-shead"><div>Nhân sự</div><div>Tiến độ</div><div>Dự án</div><div>Công việc</div></div>${rows.map(r=>{const u=r.t.filter(isUrgent).length;return `<div class="w-srow" data-ck="empB:${esc(r.name)}" title="Bấm để lọc theo nhân sự này"><div class="sn"><b>${esc(r.name)}</b><span>${r.p.length} dự án · ${r.t.length} việc${u?` <span class="w-badge">⚠ ${u}</span>`:''}</span></div><div class="sp">${avg(r.t)}%</div><div>${bar(r.p)}</div><div>${bar(r.t)}</div></div>`}).join('')}</div>`;
+ };
  const byField=(el,field,none,limit,key)=>{
   if(!el)return;const [pD,tD]=XF(key),m=new Map(),add=(x,k)=>{const n=x[field]||none;if(!m.has(n))m.set(n,{title:n,p:0,t:0});m.get(n)[k]++};pD.forEach(x=>add(x,'p'));tD.forEach(x=>add(x,'t'));
   const all=[...m.values()].sort((a,b)=>(b.p+b.t)-(a.p+a.t)||String(a.title).localeCompare(String(b.title),'vi')),rows=all.slice(0,limit);
@@ -432,7 +447,7 @@ function workOverview(p,t){
   const n=Math.max(6,Math.floor((widthOf(el)-50)/rows.length/6.3));
   combo(el,rows.map(r=>({...r,ck:key+':'+r.title,label:wrapLabel(r.title,n)})),true,all.length>rows.length?`Hiển thị ${rows.length}/${all.length} (nhiều nhất)`:'');
  };
- byField($('#w-o-dept'),'department','Chưa phân loại',6,'dept');byField($('#w-o-empc'),'owner','Chưa phân công',10,'empB');
+ byField($('#w-o-dept'),'department','Chưa phân loại',6,'dept');staffList($('#w-o-empc'));
  const SO=['Chưa thực hiện','Đang thực hiện','Chờ duyệt','Pending','Sắp đến hạn','Quá hạn','Hủy','Hoàn thành'],dimsOf=id=>({...V,w:widthOf($(id)),left:40,right:14});
  stackedOwnerChart($('#w-o-empp'),XF('empP')[0],'owner','employee',openState,dimsOf('#w-o-empp'),SO);
  stackedOwnerChart($('#w-o-emp'),XF('emp')[1],'owner','employee',openState,dimsOf('#w-o-emp'),SO);
